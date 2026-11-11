@@ -25,6 +25,8 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Follow-ups', description: 'Today / upcoming / overdue lists, complete, reschedule, reminders')]
 #[OA\Tag(name: 'Import / Export', description: 'Excel (.xlsx) and CSV')]
 #[OA\Tag(name: 'Meta', description: 'Dropdown options')]
+#[OA\Tag(name: 'Business Finder', description: 'Free manual business research: Google Maps / Search links (no paid APIs, no scraping), history, suggestions, website check, dashboard')]
+#[OA\Tag(name: 'Business Finder leads', description: 'Researched businesses, saving to the CRM, contact/website verification and CSV / Excel / PDF export')]
 #[OA\Response(response: 'Unauthenticated', description: 'Missing or invalid token', content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')]))]
 #[OA\Response(response: 'NotFound', description: 'Not found (or belongs to another user)', content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Record not found.')]))]
 #[OA\Response(response: 'ValidationError', description: 'Validation failed', content: new OA\JsonContent(properties: [

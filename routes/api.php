@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BusinessFinder\BusinessFinderController;
+use App\Http\Controllers\Api\BusinessFinder\BusinessLeadController;
+use App\Http\Controllers\Api\BusinessFinder\BusinessLeadExportController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FollowupController;
 use App\Http\Controllers\Api\LeadController;
@@ -44,4 +47,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('followups/{followup}', [FollowupController::class, 'update']);
     Route::post('followups/{followup}/complete', [FollowupController::class, 'complete']);
     Route::delete('followups/{followup}', [FollowupController::class, 'destroy']);
+
+    // Business Lead Finder (free manual research → existing CRM leads / follow-ups)
+    Route::prefix('business-finder')->middleware('throttle:business-finder')->group(function () {
+        Route::get('options', [BusinessFinderController::class, 'options']);
+        Route::get('categories', [BusinessFinderController::class, 'categories']);
+        Route::get('locations', [BusinessFinderController::class, 'locations']);
+        Route::get('search-links', [BusinessFinderController::class, 'searchLinks']);
+        Route::get('history', [BusinessFinderController::class, 'history']);
+        Route::delete('history/{id}', [BusinessFinderController::class, 'destroyHistory'])->whereNumber('id');
+        Route::get('suggestions', [BusinessFinderController::class, 'suggestions']);
+        Route::get('dashboard', [BusinessFinderController::class, 'dashboard']);
+        Route::get('check-duplicate', [BusinessFinderController::class, 'checkDuplicate']);
+        Route::post('verify-website', [BusinessFinderController::class, 'verifyWebsite'])->middleware('throttle:website-check');
+
+        Route::get('export/{format}', [BusinessLeadExportController::class, 'export'])
+            ->whereIn('format', ['csv', 'excel', 'pdf'])->middleware('throttle:exports');
+
+        Route::get('leads', [BusinessLeadController::class, 'index']);
+        Route::post('leads', [BusinessLeadController::class, 'store']);
+        Route::get('leads/{businessLead}', [BusinessLeadController::class, 'show']);
+        Route::put('leads/{businessLead}', [BusinessLeadController::class, 'update']);
+        Route::delete('leads/{businessLead}', [BusinessLeadController::class, 'destroy']);
+        Route::post('leads/{businessLead}/convert', [BusinessLeadController::class, 'convert']);
+        Route::post('leads/{businessLead}/verify-contact', [BusinessLeadController::class, 'verifyContact']);
+        Route::post('leads/{businessLead}/verify-website', [BusinessLeadController::class, 'verifyWebsite'])->middleware('throttle:website-check');
+    });
 });

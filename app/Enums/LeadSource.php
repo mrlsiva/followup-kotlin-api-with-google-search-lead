@@ -14,5 +14,6 @@ enum LeadSource: string
     case Referral = 'Referral';
     case Call = 'Call';
     case WalkIn = 'Walk-in';
+    case BusinessFinder = 'Business Finder';
     case Other = 'Other';
 }

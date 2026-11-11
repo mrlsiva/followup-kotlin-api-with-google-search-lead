@@ -6,6 +6,7 @@ use App\Enums\LeadStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FollowupResource;
 use App\Http\Resources\LeadResource;
+use App\Services\BusinessFinder\BusinessFinderStats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -27,13 +28,18 @@ class DashboardController extends Controller
                 new OA\Property(property: 'today', type: 'array', items: new OA\Items(ref: '#/components/schemas/Followup')),
                 new OA\Property(property: 'overdue', type: 'array', description: 'Up to 10, oldest first', items: new OA\Items(ref: '#/components/schemas/Followup')),
                 new OA\Property(property: 'recent_leads', type: 'array', items: new OA\Items(ref: '#/components/schemas/Lead')),
+                new OA\Property(property: 'business_finder', description: 'Business Lead Finder counters + summary text', allOf: [
+                    new OA\Schema(ref: '#/components/schemas/BusinessFinderStats'),
+                    new OA\Schema(properties: [new OA\Property(property: 'summary', type: 'string')]),
+                ]),
             ])),
             new OA\Response(response: 401, ref: '#/components/responses/Unauthenticated'),
         ]
     )]
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, BusinessFinderStats $businessFinder): JsonResponse
     {
         $user = $request->user();
+        $bf = $businessFinder->stats($user);
         $followups = fn () => $user->followups()->activeLead();
 
         $byStatus = $user->leads()->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
@@ -50,6 +56,7 @@ class DashboardController extends Controller
             'today' => FollowupResource::collection($followups()->today()->with('lead')->orderBy('scheduled_at')->get()),
             'overdue' => FollowupResource::collection($followups()->overdue()->with('lead')->orderBy('scheduled_at')->limit(10)->get()),
             'recent_leads' => LeadResource::collection($user->leads()->latest()->limit(5)->get()),
+            'business_finder' => [...$bf, 'summary' => $businessFinder->summary($bf)],
         ]);
     }
 }

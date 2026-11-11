@@ -57,4 +57,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Followup::class);
     }
+
+    public function businessLeads(): HasMany
+    {
+        return $this->hasMany(BusinessLead::class);
+    }
+
+    public function businessSearches(): HasMany
+    {
+        return $this->hasMany(BusinessSearch::class);
+    }
 }

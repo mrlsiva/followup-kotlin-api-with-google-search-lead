@@ -31,19 +31,9 @@ class LeadTransferService
     /** Writes the user's leads to a temp file and returns its path. */
     public function export(User $user, string $format): string
     {
-        $base = tempnam(sys_get_temp_dir(), 'leads_');
-        @unlink($base);
-        $path = $base.'.'.$format;
-        // CSV writer adds a UTF-8 BOM by default, so Excel shows non-ASCII names correctly
-        $writer = $format === 'xlsx' ? new XlsxWriter : new CsvWriter;
-        $writer->openToFile($path);
-
-        $headerStyle = (new Style)->setFontBold()->setFontColor('FFFFFF')->setBackgroundColor('1A5FB4');
-        $writer->addRow(Row::fromValues(self::HEADERS, $format === 'xlsx' ? $headerStyle : null));
-
-        $user->leads()->orderBy('name')->chunk(500, function ($leads) use ($writer) {
-            foreach ($leads as $lead) {
-                $writer->addRow(Row::fromValues([
+        $rows = (function () use ($user) {
+            foreach ($user->leads()->orderBy('name')->lazy(500) as $lead) {
+                yield [
                     $lead->id,
                     $lead->name,
                     (string) $lead->mobile,
@@ -56,9 +46,33 @@ class LeadTransferService
                     $lead->next_followup_at?->format('Y-m-d') ?? '',
                     $lead->next_followup_at?->format('H:i') ?? '',
                     $lead->created_at->format('Y-m-d H:i'),
-                ]));
+                ];
             }
-        });
+        })();
+
+        return $this->writeSheet($format, self::HEADERS, $rows, 'leads_');
+    }
+
+    /**
+     * Streams a header row + rows to a temp .xlsx / .csv file and returns its path.
+     * Shared by the lead export and the Business Finder export.
+     *
+     * @param  iterable<array<int, scalar|null>>  $rows
+     */
+    public function writeSheet(string $format, array $headers, iterable $rows, string $prefix = 'export_'): string
+    {
+        $base = tempnam(sys_get_temp_dir(), $prefix);
+        @unlink($base);
+        $path = $base.'.'.$format;
+        // CSV writer adds a UTF-8 BOM by default, so Excel shows non-ASCII names correctly
+        $writer = $format === 'xlsx' ? new XlsxWriter : new CsvWriter;
+        $writer->openToFile($path);
+
+        $headerStyle = (new Style)->setFontBold()->setFontColor('FFFFFF')->setBackgroundColor('1A5FB4');
+        $writer->addRow(Row::fromValues($headers, $format === 'xlsx' ? $headerStyle : null));
+        foreach ($rows as $row) {
+            $writer->addRow(Row::fromValues($row));
+        }
         $writer->close();
 
         return $path;

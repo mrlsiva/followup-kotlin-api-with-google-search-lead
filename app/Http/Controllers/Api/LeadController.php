@@ -113,7 +113,7 @@ class LeadController extends Controller
     )]
     public function show(Lead $lead): LeadResource
     {
-        return new LeadResource($lead->load(['followups' => fn ($q) => $q
+        return new LeadResource($lead->load(['businessLead', 'followups' => fn ($q) => $q
             ->orderByRaw("status = 'pending' DESC")
             ->orderByRaw('COALESCE(completed_at, scheduled_at) DESC'),
         ]));

@@ -50,6 +50,11 @@ trait ParsesNextFollowup
             if ($next && $next->isPast()) {
                 $v->errors()->add('next_followup_date', 'The next follow-up must be in the future.');
             }
+            // A do-not-contact lead (Business Finder contact verification) cannot get new calls scheduled.
+            $lead = $this->route('lead') ?? $this->route('followup')?->lead ?? $this->route('businessLead')?->lead;
+            if ($next && $lead?->do_not_contact) {
+                $v->errors()->add('next_followup_date', 'This lead is marked "Do not contact". Follow-ups cannot be scheduled.');
+            }
         });
     }
 }

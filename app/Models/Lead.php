@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Support\Phone;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
@@ -27,7 +29,20 @@ class Lead extends Model
             'status' => LeadStatus::class,
             'priority' => LeadPriority::class,
             'next_followup_at' => 'datetime',
+            'do_not_contact' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Comparable phone digits for duplicate detection (Business Lead Finder).
+        static::saving(fn (Lead $lead) => $lead->mobile_digits = Phone::digits($lead->mobile));
+    }
+
+    /** The Business Lead Finder record this lead was saved from, if any. */
+    public function businessLead(): HasOne
+    {
+        return $this->hasOne(BusinessLead::class);
     }
 
     public function user(): BelongsTo

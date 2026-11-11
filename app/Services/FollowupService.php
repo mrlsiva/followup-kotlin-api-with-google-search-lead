@@ -25,6 +25,10 @@ class FollowupService
      */
     public function syncNextFollowup(Lead $lead, ?Carbon $at): void
     {
+        if ($lead->do_not_contact) {
+            $at = null;     // never schedule calls to a do-not-contact lead (controllers reject it explicitly)
+        }
+
         DB::transaction(function () use ($lead, $at) {
             $pending = $lead->followups()->pending()->orderBy('scheduled_at')->get();
 

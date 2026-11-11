@@ -195,6 +195,1664 @@
                 ]
             }
         },
+        "/api/business-finder/options": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Dropdown values for the Business Finder screens",
+                "operationId": "557a6372e6673f34d076b5f547941b29",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "quantities": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            },
+                                            "example": [
+                                                20,
+                                                50,
+                                                100
+                                            ]
+                                        },
+                                        "website_statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "website_filters": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "contact_statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "contact_filters": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "phone_available"
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "Phone available"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "export_scopes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "state": {
+                                            "type": "string",
+                                            "example": "Tamil Nadu"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/categories": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Business categories",
+                "operationId": "58bda61dcd2a6a398afac9b435cd42e2",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "Hospitals"
+                                                    },
+                                                    "search_term": {
+                                                        "type": "string",
+                                                        "example": "Hospitals"
+                                                    },
+                                                    "assignable": {
+                                                        "description": "false for \"All businesses\" (search filter only)",
+                                                        "type": "boolean"
+                                                    },
+                                                    "needs_keywords": {
+                                                        "description": "true for \"Other businesses\"",
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/locations": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Tamil Nadu districts and their main towns",
+                "operationId": "e46c11daa70e319c04980efc97f400bd",
+                "parameters": [
+                    {
+                        "name": "district",
+                        "in": "query",
+                        "description": "Only this district",
+                        "schema": {
+                            "type": "string",
+                            "example": "Madurai"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "state": {
+                                            "type": "string",
+                                            "example": "Tamil Nadu"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "district": {
+                                                        "type": "string",
+                                                        "example": "Madurai"
+                                                    },
+                                                    "cities": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        },
+                                                        "example": [
+                                                            "Madurai",
+                                                            "Melur"
+                                                        ]
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/search-links": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Generate free Google Maps / Google Search links for manual research",
+                "description": "Builds links locally (no Google API, no scraping) and saves the search to history.\n\nExample: `category=Hospitals&city=Chennai` → query **Hospitals in Chennai**, Maps link `https://www.google.com/maps/search/?api=1&query=Hospitals%20in%20Chennai`.",
+                "operationId": "0504bf530ce7df3dba03c43413ee3e90",
+                "parameters": [
+                    {
+                        "name": "business_name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "match_type",
+                        "in": "query",
+                        "description": "exact = quoted name",
+                        "schema": {
+                            "type": "string",
+                            "default": "partial",
+                            "enum": [
+                                "exact",
+                                "partial"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "keywords",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "Hospitals"
+                        }
+                    },
+                    {
+                        "name": "district",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "Chennai"
+                        }
+                    },
+                    {
+                        "name": "area",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "pincode",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "600040"
+                        }
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20,
+                            "enum": [
+                                20,
+                                50,
+                                100
+                            ]
+                        }
+                    },
+                    {
+                        "name": "website_filter",
+                        "in": "query",
+                        "description": "Remembered with the search; applied to the saved-business list",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_filter",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "phone_available",
+                                "phone_missing",
+                                "pending",
+                                "verified"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "save_history",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SearchLinks"
+                                        },
+                                        "search_id": {
+                                            "description": "Send as business_search_id when adding a business from this search",
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "already_saved": {
+                                            "description": "Your saved businesses matching this category/location",
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/history": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Search history (newest first)",
+                "operationId": "872bcc9fb81a5b80192ec0120229afbb",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Filter by query text",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/page"
+                    },
+                    {
+                        "$ref": "#/components/parameters/per_page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated history",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessSearch"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/history/{id}": {
+            "delete": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Remove a search from history",
+                "operationId": "d3e43e59e74fe8d8494520400586e96c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Search removed from history."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/suggestions": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "What to research or verify next",
+                "description": "Suggested searches (categories not yet searched in your usual cities), recent searches, businesses waiting for verification and businesses not yet saved to the CRM.",
+                "operationId": "9c8f972eebbfbe116921467beee465d5",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "suggested_searches": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "category": {
+                                                        "type": "string"
+                                                    },
+                                                    "city": {
+                                                        "type": "string"
+                                                    },
+                                                    "reason": {
+                                                        "type": "string"
+                                                    },
+                                                    "links": {
+                                                        "$ref": "#/components/schemas/SearchLinks"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "recent_searches": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessSearch"
+                                            }
+                                        },
+                                        "needs_verification": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessLead"
+                                            }
+                                        },
+                                        "not_saved_to_crm": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessLead"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/dashboard": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Business Finder dashboard: statistics and discovery summary",
+                "operationId": "ad6b493541171fa1a66adc7086b27853",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "stats": {
+                                            "$ref": "#/components/schemas/BusinessFinderStats"
+                                        },
+                                        "summary": {
+                                            "type": "string",
+                                            "example": "42 businesses researched, 30 saved to CRM. 18 have no website, 20 contacts verified, 9 pending verification. 6 interested, 2 converted."
+                                        },
+                                        "by_category": {
+                                            "type": "object",
+                                            "example": {
+                                                "Hospitals": 12,
+                                                "Schools": 8
+                                            }
+                                        },
+                                        "by_city": {
+                                            "type": "object",
+                                            "example": {
+                                                "Chennai": 20,
+                                                "Madurai": 9
+                                            }
+                                        },
+                                        "recent_businesses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessLead"
+                                            }
+                                        },
+                                        "recent_searches": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessSearch"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/check-duplicate": {
+            "get": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Check a phone number / business name before saving",
+                "operationId": "802168e6dcd613797ba7ec9eb9b57d50",
+                "parameters": [
+                    {
+                        "name": "phone",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "+91 98765 43210"
+                        }
+                    },
+                    {
+                        "name": "business_name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "is_duplicate": {
+                                            "description": "Phone already used by a CRM lead or a researched business",
+                                            "type": "boolean"
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "business_lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BusinessLead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "similar": {
+                                            "description": "Same business name in the same city (warning only)",
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessLead"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/verify-website": {
+            "post": {
+                "tags": [
+                    "Business Finder"
+                ],
+                "summary": "Check whether a website responds (not saved)",
+                "description": "Optional, polite check: validates the URL, refuses localhost/private addresses, reads robots.txt first, follows up to 5 redirects, handles SSL errors and uses short timeouts. Limited to 10 checks per minute.\n\n**A failed check never means the website does not exist.**",
+                "operationId": "87642c9fefb8029c1013be8c5eab11bb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "url"
+                                ],
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "example": "example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Check result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebsiteCheck"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "description": "Too many checks"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/leads": {
+            "get": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Saved / researched businesses",
+                "operationId": "dae9a85f2e43e283da8e88cbd1644831",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Business name, contact person, phone, email, city or area",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "district",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "website_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "No website found",
+                                "Website available",
+                                "Website outdated",
+                                "Website inactive",
+                                "Pending verification"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "contact_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Pending",
+                                "Verified",
+                                "Incorrect number",
+                                "Disconnected",
+                                "Do not contact"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "phone_available",
+                                "phone_missing",
+                                "pending",
+                                "verified"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "saved",
+                        "in": "query",
+                        "description": "1 = saved to CRM, 0 = not yet",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "lead_status",
+                        "in": "query",
+                        "description": "Status of the linked CRM lead",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "New",
+                                "Interested",
+                                "Follow-up",
+                                "Won",
+                                "Lost"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "all",
+                            "enum": [
+                                "all",
+                                "verified_contacts",
+                                "no_website",
+                                "followups"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest",
+                                "name",
+                                "city"
+                            ]
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/page"
+                    },
+                    {
+                        "$ref": "#/components/parameters/per_page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated businesses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/BusinessLead"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Add Business to CRM",
+                "description": "Saves the researched business and (unless `save_to_crm=false`) creates a CRM lead in the existing leads table:\n\n| Business field | CRM lead field |\n|---|---|\n| Business name | company |\n| Contact person (or business name) | name |\n| Phone | mobile |\n| Email | email |\n| — | source = `Business Finder` |\n| Category, location, website | appended to notes |\n| — | status `New`, priority `Medium` (overridable) |\n\nSend `next_followup_date` / `next_followup_time` to schedule the first call through the existing follow-up system. A phone number already used by one of your CRM leads returns **409** with the existing lead; resend with `on_duplicate=link` to attach to it.",
+                "operationId": "b17d6a04d8e2b6d488eab1033c1d7a88",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BusinessLeadInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/DuplicateBusiness"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/leads/{id}": {
+            "get": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Business details with the linked CRM lead and its follow-up timeline",
+                "operationId": "dc2a4be20db6651f7af17a40ebdadd17",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ],
+                                            "description": "Full CRM lead with followups timeline"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Edit a business (send only the fields to change)",
+                "description": "Business name, contact person, phone and email changes are copied to the linked CRM lead.",
+                "operationId": "46c93194085134673ff04d82408ee554",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BusinessLeadInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/DuplicateBusiness"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Remove a researched business",
+                "description": "The linked CRM lead (if any) is kept; delete it from /api/leads if needed.",
+                "operationId": "9affcd17632ec6137a754e25138b03fd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Business removed."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/leads/{id}/convert": {
+            "post": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Save a researched business to the CRM",
+                "description": "Creates the CRM lead (same mapping as Add Business to CRM) and optionally schedules the first call. 409 when already saved or when the phone belongs to another lead (use on_duplicate=link).",
+                "operationId": "e67d51de7d6279ec507e4c97b8b5eae0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "on_duplicate": {
+                                        "type": "string",
+                                        "default": "reject",
+                                        "enum": [
+                                            "reject",
+                                            "link"
+                                        ]
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "default": "Medium",
+                                        "enum": [
+                                            "High",
+                                            "Medium",
+                                            "Low"
+                                        ]
+                                    },
+                                    "lead_status": {
+                                        "type": "string",
+                                        "default": "New",
+                                        "enum": [
+                                            "New",
+                                            "Interested",
+                                            "Follow-up",
+                                            "Won",
+                                            "Lost"
+                                        ]
+                                    },
+                                    "next_followup_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-11-12",
+                                        "nullable": true
+                                    },
+                                    "next_followup_time": {
+                                        "type": "string",
+                                        "example": "11:00",
+                                        "nullable": true
+                                    },
+                                    "next_followup_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Saved to CRM",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "lead": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/DuplicateBusiness"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/leads/{id}/verify-contact": {
+            "post": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Record a manual contact verification",
+                "description": "The salesperson confirms the details. Nothing is verified automatically.\n\n`Do not contact` cancels the pending follow-up of the linked CRM lead and blocks new ones; the record is left out of exports.",
+                "operationId": "d41aa5faf346dd8f2bd28d2821c4e661",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "verification_status"
+                                ],
+                                "properties": {
+                                    "verification_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Pending",
+                                            "Verified",
+                                            "Incorrect number",
+                                            "Disconnected",
+                                            "Do not contact"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "contact_source": {
+                                        "type": "string",
+                                        "example": "Called the listed number",
+                                        "nullable": true
+                                    },
+                                    "source_url": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "verification_date": {
+                                        "description": "Default today",
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Spoke to reception, owner available after 5 pm",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/DuplicateBusiness"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/leads/{id}/verify-website": {
+            "post": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Check the business website and store the result",
+                "description": "Uses the saved website (or `url`, which is then saved). The website status is changed only when the site clearly responds (→ Website available); otherwise the result is stored and the salesperson decides.",
+                "operationId": "fee0d742f334521db06a7257ea158793",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Checked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/BusinessLead"
+                                        },
+                                        "check": {
+                                            "$ref": "#/components/schemas/WebsiteCheck"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "description": "Too many checks"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/business-finder/export/{format}": {
+            "get": {
+                "tags": [
+                    "Business Finder leads"
+                ],
+                "summary": "Export businesses as CSV, Excel or PDF",
+                "description": "Only your own records. Do-not-contact records are excluded unless `include_do_not_contact=1`.\n\nPresets (`scope`): `all`, `verified_contacts`, `no_website` (marked No website found after research), `followups` (saved leads with a scheduled call).\nSelected records: `ids[]=1&ids[]=5`. All list filters also apply. PDF is limited to 1000 records.",
+                "operationId": "ad29cc5f5480f15b28a5b340fc751733",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel",
+                                "pdf"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "all",
+                            "enum": [
+                                "all",
+                                "verified_contacts",
+                                "no_website",
+                                "followups"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "ids[]",
+                        "in": "query",
+                        "description": "Selected business IDs",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "district",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "website_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "phone_available",
+                                "phone_missing",
+                                "pending",
+                                "verified"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "saved",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "lead_status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include_do_not_contact",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File download",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "429": {
+                        "description": "Too many exports"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/dashboard": {
             "get": {
                 "tags": [
@@ -262,6 +1920,22 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/Lead"
                                             }
+                                        },
+                                        "business_finder": {
+                                            "description": "Business Lead Finder counters + summary text",
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BusinessFinderStats"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "summary": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
                                         }
                                     },
                                     "type": "object"
@@ -1418,6 +3092,368 @@
                 },
                 "type": "object"
             },
+            "SearchLinks": {
+                "description": "Free manual-research links. Open them in the browser / Google Maps app; nothing is scraped.",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "example": "Hospitals in Chennai"
+                    },
+                    "target_count": {
+                        "description": "Research goal only (20 / 50 / 100)",
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "google_maps_url": {
+                        "type": "string",
+                        "example": "https://www.google.com/maps/search/?api=1&query=Hospitals%20in%20Chennai"
+                    },
+                    "google_maps_app_uri": {
+                        "description": "Android intent URI that opens the Maps app",
+                        "type": "string",
+                        "example": "geo:0,0?q=Hospitals%20in%20Chennai"
+                    },
+                    "google_search_url": {
+                        "type": "string",
+                        "example": "https://www.google.com/search?q=Hospitals+in+Chennai+contact+number"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "maps",
+                                        "contact",
+                                        "website",
+                                        "directory"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "example": "Contact numbers"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "result_pages": {
+                        "description": "Google result pages (10 per page) up to the target count",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "page": {
+                                    "type": "integer"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "instructions": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "WebsiteCheck": {
+                "description": "Result of the optional website availability check. A failed check never means the website does not exist.",
+                "properties": {
+                    "input_url": {
+                        "type": "string",
+                        "example": "srilakshmihospital.in"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://srilakshmihospital.in/",
+                        "nullable": true
+                    },
+                    "final_url": {
+                        "description": "After redirects",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "result": {
+                        "type": "string",
+                        "enum": [
+                            "reachable",
+                            "http_error",
+                            "unreachable",
+                            "blocked_by_robots",
+                            "too_many_redirects",
+                            "invalid_url",
+                            "not_allowed"
+                        ]
+                    },
+                    "reachable": {
+                        "type": "boolean"
+                    },
+                    "http_status": {
+                        "type": "integer",
+                        "example": 200,
+                        "nullable": true
+                    },
+                    "ssl_valid": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "redirects": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "response_time_ms": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "suggested_status": {
+                        "description": "Only set when the site clearly responded",
+                        "type": "string",
+                        "example": "Website available",
+                        "nullable": true
+                    },
+                    "hints": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "checked_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "cached": {
+                        "description": "Same URL checked in the last 10 minutes",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "BusinessFinderStats": {
+                "properties": {
+                    "total_researched": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "saved_to_crm": {
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "no_website": {
+                        "type": "integer",
+                        "example": 18
+                    },
+                    "website_available": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "website_outdated": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "website_inactive": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "contact_verified": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "do_not_contact": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "pending_verification": {
+                        "type": "integer",
+                        "example": 9
+                    },
+                    "new_leads": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "interested": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "converted": {
+                        "description": "Linked CRM leads with status Won",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "searches": {
+                        "type": "integer",
+                        "example": 25
+                    }
+                },
+                "type": "object"
+            },
+            "BusinessLeadInput": {
+                "properties": {
+                    "business_name": {
+                        "description": "Required on create",
+                        "type": "string",
+                        "example": "Sri Lakshmi Hospital"
+                    },
+                    "category": {
+                        "description": "Any category except \"All businesses\" (default \"Other businesses\")",
+                        "type": "string",
+                        "example": "Hospitals"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "example": "Dr. Senthil",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "description": "Public business phone",
+                        "type": "string",
+                        "example": "+91 452 234 5678",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "area": {
+                        "type": "string",
+                        "example": "Anna Nagar",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Madurai",
+                        "nullable": true
+                    },
+                    "district": {
+                        "type": "string",
+                        "example": "Madurai",
+                        "nullable": true
+                    },
+                    "pincode": {
+                        "type": "string",
+                        "example": "625020",
+                        "nullable": true
+                    },
+                    "source_url": {
+                        "description": "Where the contact was found (Maps listing, website…)",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "website_url": {
+                        "description": "https:// is added when missing",
+                        "type": "string",
+                        "example": "srilakshmihospital.in",
+                        "nullable": true
+                    },
+                    "website_status": {
+                        "type": "string",
+                        "example": "Pending verification",
+                        "enum": [
+                            "No website found",
+                            "Website available",
+                            "Website outdated",
+                            "Website inactive",
+                            "Pending verification"
+                        ]
+                    },
+                    "contact_status": {
+                        "type": "string",
+                        "example": "Pending",
+                        "enum": [
+                            "Pending",
+                            "Verified",
+                            "Incorrect number",
+                            "Disconnected",
+                            "Do not contact"
+                        ]
+                    },
+                    "contact_source": {
+                        "type": "string",
+                        "example": "Google Maps listing",
+                        "nullable": true
+                    },
+                    "contact_verified_at": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_search_id": {
+                        "description": "search_id from /search-links",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "save_to_crm": {
+                        "description": "Create only. false = keep as researched, save later with /convert",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "on_duplicate": {
+                        "description": "Create only. link = attach to the existing CRM lead with the same phone",
+                        "type": "string",
+                        "default": "reject",
+                        "enum": [
+                            "reject",
+                            "link"
+                        ]
+                    },
+                    "priority": {
+                        "description": "Create only, CRM lead priority",
+                        "type": "string",
+                        "default": "Medium",
+                        "enum": [
+                            "High",
+                            "Medium",
+                            "Low"
+                        ]
+                    },
+                    "lead_status": {
+                        "description": "Create only, CRM lead status",
+                        "type": "string",
+                        "default": "New",
+                        "enum": [
+                            "New",
+                            "Interested",
+                            "Follow-up",
+                            "Won",
+                            "Lost"
+                        ]
+                    },
+                    "next_followup_date": {
+                        "description": "Create only: first call",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-12",
+                        "nullable": true
+                    },
+                    "next_followup_time": {
+                        "type": "string",
+                        "example": "11:00",
+                        "nullable": true
+                    },
+                    "next_followup_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "LeadInput": {
                 "properties": {
                     "name": {
@@ -1550,6 +3586,274 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "BusinessLead": {
+                "description": "A business researched in the Business Lead Finder. When saved to the CRM it is linked to a regular lead (lead_id).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "business_name": {
+                        "type": "string",
+                        "example": "Sri Lakshmi Hospital"
+                    },
+                    "category": {
+                        "type": "string",
+                        "example": "Hospitals"
+                    },
+                    "contact_person": {
+                        "type": "string",
+                        "example": "Dr. Senthil",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+91 452 234 5678",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "area": {
+                        "type": "string",
+                        "example": "Anna Nagar",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Madurai",
+                        "nullable": true
+                    },
+                    "district": {
+                        "type": "string",
+                        "example": "Madurai",
+                        "nullable": true
+                    },
+                    "pincode": {
+                        "type": "string",
+                        "example": "625020",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "example": "Tamil Nadu"
+                    },
+                    "source_url": {
+                        "description": "Where the public contact details were found",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "website_url": {
+                        "type": "string",
+                        "example": "https://srilakshmihospital.in/",
+                        "nullable": true
+                    },
+                    "website_status": {
+                        "type": "string",
+                        "enum": [
+                            "No website found",
+                            "Website available",
+                            "Website outdated",
+                            "Website inactive",
+                            "Pending verification"
+                        ]
+                    },
+                    "website_checked_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "website_http_status": {
+                        "type": "integer",
+                        "example": 200,
+                        "nullable": true
+                    },
+                    "website_check_result": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "reachable",
+                            "http_error",
+                            "unreachable",
+                            "blocked_by_robots",
+                            "too_many_redirects",
+                            "invalid_url",
+                            "not_allowed"
+                        ]
+                    },
+                    "website_check_message": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_status": {
+                        "type": "string",
+                        "enum": [
+                            "Pending",
+                            "Verified",
+                            "Incorrect number",
+                            "Disconnected",
+                            "Do not contact"
+                        ]
+                    },
+                    "contact_source": {
+                        "type": "string",
+                        "example": "Google Maps listing",
+                        "nullable": true
+                    },
+                    "contact_verified_at": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "do_not_contact": {
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "saved_to_crm": {
+                        "type": "boolean"
+                    },
+                    "lead_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "lead": {
+                        "description": "CRM lead summary",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string"
+                            },
+                            "priority": {
+                                "type": "string"
+                            },
+                            "next_followup_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            },
+                            "next_followup_date": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                            },
+                            "next_followup_time": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "is_overdue": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "business_search_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "BusinessSearch": {
+                "description": "A search-history entry. `links` regenerates the manual search links so the search can be re-opened.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "query": {
+                        "type": "string",
+                        "example": "Hospitals in Chennai"
+                    },
+                    "business_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "match_type": {
+                        "type": "string",
+                        "enum": [
+                            "exact",
+                            "partial"
+                        ]
+                    },
+                    "keywords": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "category": {
+                        "type": "string",
+                        "example": "Hospitals",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "example": "Tamil Nadu"
+                    },
+                    "district": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "Chennai",
+                        "nullable": true
+                    },
+                    "area": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "pincode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "website_filter": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "contact_filter": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "businesses_saved": {
+                        "description": "Businesses added from this search",
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/SearchLinks"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -1702,6 +4006,25 @@
                         "type": "string",
                         "nullable": true
                     },
+                    "do_not_contact": {
+                        "description": "Set from Business Finder contact verification; no follow-ups are scheduled while true",
+                        "type": "boolean"
+                    },
+                    "business_lead": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/BusinessLead"
+                            },
+                            {
+                                "type": "object",
+                                "nullable": true,
+                                "enum": [
+                                    null
+                                ]
+                            }
+                        ],
+                        "description": "Business Finder details (detail endpoint only, when the lead came from Business Finder)"
+                    },
                     "next_followup_at": {
                         "type": "string",
                         "format": "date-time",
@@ -1789,6 +4112,69 @@
             }
         },
         "responses": {
+            "DuplicateBusiness": {
+                "description": "Same phone number already exists",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "A CRM lead with this phone number already exists."
+                                },
+                                "duplicate": {
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "lead",
+                                                "business_lead"
+                                            ]
+                                        },
+                                        "lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Lead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "business_lead": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BusinessLead"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "can_link": {
+                                            "description": "Resend with on_duplicate=link to attach to the existing lead",
+                                            "type": "boolean"
+                                        },
+                                        "hint": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
             "Unauthenticated": {
                 "description": "Missing or invalid token",
                 "content": {
@@ -1905,6 +4291,14 @@
         {
             "name": "Meta",
             "description": "Dropdown options"
+        },
+        {
+            "name": "Business Finder",
+            "description": "Free manual business research: Google Maps / Search links (no paid APIs, no scraping), history, suggestions, website check, dashboard"
+        },
+        {
+            "name": "Business Finder leads",
+            "description": "Researched businesses, saving to the CRM, contact/website verification and CSV / Excel / PDF export"
         }
     ]
 }
