@@ -1,0 +1,1910 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Follow-up CRM API",
+        "description": "REST API for the Lead Generation & Follow-up Android app.\n\n**Auth:** call `POST /api/auth/login` (demo: `admin@example.com` / `password`), copy the `token`, click **Authorize** and paste it.\n\n**Dates:** send `YYYY-MM-DD` dates and `HH:MM` (24h) times; responses include ISO-8601 timestamps plus separate date/time fields.\n\n**Follow-ups:** a lead has at most one *pending* follow-up (its next follow-up). Completed follow-ups form the lead's timeline.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/followup-api-kotlin/public",
+            "description": "XAMPP (local)"
+        }
+    ],
+    "paths": {
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Create an account and get a token",
+                "operationId": "c7bb21a0d87049e161b8e4c9b0d909f2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Sales Admin"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "secret123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "secret123"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "Pixel 8"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registered",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthToken"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Log in and get a bearer token",
+                "operationId": "dd51a484b7fa0f97c7680fdbde14cf5f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "Pixel 8"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthToken"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                }
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Current user",
+                "operationId": "b5de204f5e452ef51327c691aa99e77c",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Revoke the current token",
+                "operationId": "df9bdc6c7a6d9f20b983526b2ec0f698",
+                "responses": {
+                    "200": {
+                        "description": "Logged out",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dashboard counters, today’s follow-ups and recent leads",
+                "operationId": "de6c688e05d760f6cc5ea6518dbec04f",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "stats": {
+                                            "properties": {
+                                                "total_leads": {
+                                                    "type": "integer",
+                                                    "example": 48
+                                                },
+                                                "today_followups": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "completed_followups": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                },
+                                                "pending_followups": {
+                                                    "type": "integer",
+                                                    "example": 31
+                                                },
+                                                "overdue_followups": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "leads_by_status": {
+                                            "type": "object",
+                                            "example": {
+                                                "New": 10,
+                                                "Interested": 8,
+                                                "Follow-up": 20,
+                                                "Won": 6,
+                                                "Lost": 4
+                                            }
+                                        },
+                                        "today": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Followup"
+                                            }
+                                        },
+                                        "overdue": {
+                                            "description": "Up to 10, oldest first",
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Followup"
+                                            }
+                                        },
+                                        "recent_leads": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Lead"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/followups": {
+            "get": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Follow-up lists: today, upcoming, overdue, pending, completed",
+                "operationId": "f8294cc45e06d719b4cce2a6be332144",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "today = pending scheduled today (past ones flagged is_overdue); upcoming = after today; overdue = pending past due",
+                        "schema": {
+                            "type": "string",
+                            "default": "pending",
+                            "enum": [
+                                "today",
+                                "upcoming",
+                                "overdue",
+                                "pending",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Filter scheduled/completed date ≥ (Y-m-d)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Filter scheduled/completed date ≤ (Y-m-d)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Lead name, company or phone",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/page"
+                    },
+                    {
+                        "$ref": "#/components/parameters/per_page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated follow-ups with lead summary",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Followup"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/followups/reminders": {
+            "get": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Pending follow-ups in a time window — for scheduling local notifications",
+                "description": "The app can call this after login/sync and schedule an Android local notification for each item. Defaults to the next 7 days.",
+                "operationId": "4ae4f2654baade07212a1d504a7a1c1e",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "ISO date-time (default now)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "description": "Window length in days (1–30)",
+                        "schema": {
+                            "type": "integer",
+                            "default": 7
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Followup"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/followups/daily-summary": {
+            "get": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Daily reminder text for pending follow-ups",
+                "operationId": "dd98938b8171db509bf040e2c284186a",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date"
+                                        },
+                                        "today": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "overdue": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "pending": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "should_notify": {
+                                            "type": "boolean"
+                                        },
+                                        "title": {
+                                            "type": "string",
+                                            "example": "Pending follow-ups"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You have 4 follow-ups due today and 2 overdue."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/followups/{followup}": {
+            "get": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Follow-up details",
+                "operationId": "a711a6642f289553ea66b7576d0b3e99",
+                "parameters": [
+                    {
+                        "name": "followup",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Followup"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Reschedule a pending follow-up",
+                "operationId": "da1b2e03d8c7decb0027b940a1fbff2e",
+                "parameters": [
+                    {
+                        "name": "followup",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "next_followup_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-11-15"
+                                    },
+                                    "next_followup_time": {
+                                        "type": "string",
+                                        "example": "16:00"
+                                    },
+                                    "next_followup_at": {
+                                        "description": "Alternative to date + time",
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rescheduled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Followup"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "description": "Completed follow-ups cannot be rescheduled"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Delete a note or cancel a pending follow-up",
+                "operationId": "4ecd8a99dfa9e7df7424efbabdb8a4c0",
+                "parameters": [
+                    {
+                        "name": "followup",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Follow-up deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/followups/{followup}/complete": {
+            "post": {
+                "tags": [
+                    "Follow-ups"
+                ],
+                "summary": "Mark a follow-up completed and schedule the next one automatically",
+                "description": "Records the call outcome. Unless `schedule_next=false` or an explicit next date is sent, the next follow-up is auto-scheduled:\n\n| Status after call | Next follow-up |\n|---|---|\n| Not Answered / Callback | +1 day |\n| Interested | +1 day (High), +3 (Medium), +5 (Low) |\n| Closed | none |\n\nThe original time of day is kept and Sundays are skipped.",
+                "operationId": "3ddec6b177368dd279d3d3823c486eb8",
+                "parameters": [
+                    {
+                        "name": "followup",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "call_status"
+                                ],
+                                "properties": {
+                                    "call_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "Interested",
+                                            "Not Answered",
+                                            "Callback",
+                                            "Closed"
+                                        ]
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Spoke to Ravi, sending quotation"
+                                    },
+                                    "schedule_next": {
+                                        "type": "boolean",
+                                        "default": true
+                                    },
+                                    "next_followup_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-11-14",
+                                        "nullable": true
+                                    },
+                                    "next_followup_time": {
+                                        "type": "string",
+                                        "example": "11:00",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Completed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Followup"
+                                        },
+                                        "next_followup": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/Followup"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        null
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "lead": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "409": {
+                        "description": "Already completed"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "List / search leads",
+                "operationId": "35c6844d021336b11f6dfdeff94dd1dc",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Name, company, phone or email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "New",
+                                "Interested",
+                                "Follow-up",
+                                "Won",
+                                "Lost"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "High",
+                                "Medium",
+                                "Low"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "WhatsApp",
+                                "Facebook",
+                                "Website",
+                                "Referral",
+                                "Call",
+                                "Walk-in",
+                                "Other"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest",
+                                "name",
+                                "next_followup",
+                                "priority"
+                            ]
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/page"
+                    },
+                    {
+                        "$ref": "#/components/parameters/per_page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated leads",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Lead"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Add a new lead",
+                "operationId": "03cafc6443fab89b0fc03c604233a2e8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeadInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads/{lead}": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Lead details with follow-up timeline",
+                "operationId": "eb9aeca13fea0eeebe1afca1eabd83a4",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Edit a lead (send only the fields to change)",
+                "operationId": "c0fd2a79758d8f757680a20e76291295",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeadInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Delete a lead and its follow-ups",
+                "operationId": "d5a261600dfd9748f82ff0305aa340c6",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lead deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads/{lead}/followups": {
+            "get": {
+                "tags": [
+                    "Lead follow-ups"
+                ],
+                "summary": "Follow-up history (timeline) of a lead",
+                "operationId": "5f34d67332bf125bd13d0fbf9b16f515",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Pending follow-up first, then notes newest first",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Followup"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Lead follow-ups"
+                ],
+                "summary": "Add a follow-up note (date, time, note, status after call)",
+                "operationId": "3ce255e230a0adea13728e47eebd8398",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FollowupNoteInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Followup"
+                                        },
+                                        "lead": {
+                                            "$ref": "#/components/schemas/Lead"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads/export": {
+            "get": {
+                "tags": [
+                    "Import / Export"
+                ],
+                "summary": "Download all leads as Excel or CSV",
+                "operationId": "b809eb3ea87cdc19ca292a5dbf0cab97",
+                "parameters": [
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "default": "xlsx",
+                            "enum": [
+                                "xlsx",
+                                "csv"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File download",
+                        "content": {
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads/import": {
+            "post": {
+                "tags": [
+                    "Import / Export"
+                ],
+                "summary": "Import leads from Excel (.xlsx) or CSV",
+                "description": "First row must be a header. Required column: **Customer Name**. Optional: ID, Mobile Number, Email, Company Name, Lead Source, Status, Priority, Notes, Next Follow-up Date, Next Follow-up Time.\n\nRows matching an existing lead by ID or mobile number update it; others are created. Use the export file as a template.",
+                "operationId": "fa66f0ca4abf8f33f5606a2371da80f6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Import summary",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Import complete."
+                                        },
+                                        "created": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "updated": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "skipped": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "Row 5: missing customer name"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/options": {
+            "get": {
+                "tags": [
+                    "Meta"
+                ],
+                "summary": "Allowed values for dropdowns (no auth)",
+                "operationId": "be6104a32f7f4369f4c97a535e95d52f",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "sources": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "WhatsApp",
+                                                "Facebook",
+                                                "Website",
+                                                "Referral",
+                                                "Call",
+                                                "Walk-in",
+                                                "Other"
+                                            ]
+                                        },
+                                        "statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "New",
+                                                "Interested",
+                                                "Follow-up",
+                                                "Won",
+                                                "Lost"
+                                            ]
+                                        },
+                                        "priorities": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "High",
+                                                "Medium",
+                                                "Low"
+                                            ]
+                                        },
+                                        "call_statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "Interested",
+                                                "Not Answered",
+                                                "Callback",
+                                                "Closed"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuthToken": {
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "example": "1|qXk0..."
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "LeadInput": {
+                "properties": {
+                    "name": {
+                        "description": "Required on create",
+                        "type": "string",
+                        "example": "Ravi Kumar"
+                    },
+                    "mobile": {
+                        "type": "string",
+                        "example": "+91 98765 43210",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "ravi@acme.in",
+                        "nullable": true
+                    },
+                    "company": {
+                        "type": "string",
+                        "example": "Acme Traders",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "WhatsApp",
+                        "enum": [
+                            "WhatsApp",
+                            "Facebook",
+                            "Website",
+                            "Referral",
+                            "Call",
+                            "Walk-in",
+                            "Other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "New",
+                        "enum": [
+                            "New",
+                            "Interested",
+                            "Follow-up",
+                            "Won",
+                            "Lost"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "example": "High",
+                        "enum": [
+                            "High",
+                            "Medium",
+                            "Low"
+                        ]
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Wants a quote for 200 units",
+                        "nullable": true
+                    },
+                    "next_followup_date": {
+                        "description": "Send null to clear the schedule",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-12",
+                        "nullable": true
+                    },
+                    "next_followup_time": {
+                        "description": "HH:MM 24h, default 10:00",
+                        "type": "string",
+                        "example": "15:30",
+                        "nullable": true
+                    },
+                    "next_followup_at": {
+                        "description": "Alternative to date + time",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "FollowupNoteInput": {
+                "required": [
+                    "call_status"
+                ],
+                "properties": {
+                    "date": {
+                        "description": "When the call happened (default today)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-10"
+                    },
+                    "time": {
+                        "description": "HH:MM 24h (default now)",
+                        "type": "string",
+                        "example": "11:15"
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Asked for revised pricing, call back Friday"
+                    },
+                    "call_status": {
+                        "type": "string",
+                        "enum": [
+                            "Interested",
+                            "Not Answered",
+                            "Callback",
+                            "Closed"
+                        ]
+                    },
+                    "schedule_next": {
+                        "description": "true = auto-schedule next follow-up from call status + priority; false = no next follow-up; omitted = keep the current schedule (notes) / auto-schedule (complete)",
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "next_followup_date": {
+                        "description": "Explicit next follow-up (overrides schedule_next)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-14",
+                        "nullable": true
+                    },
+                    "next_followup_time": {
+                        "type": "string",
+                        "example": "11:00",
+                        "nullable": true
+                    },
+                    "next_followup_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Followup": {
+                "description": "Pending rows are scheduled reminders; completed rows are timeline notes.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 40
+                    },
+                    "lead_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "lead": {
+                        "description": "Included on follow-up list endpoints",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "mobile": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "company": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "status": {
+                                "type": "string"
+                            },
+                            "priority": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed"
+                        ]
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "date": {
+                        "description": "Date of the note (completed) or due date (pending)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-12"
+                    },
+                    "time": {
+                        "type": "string",
+                        "example": "15:30"
+                    },
+                    "is_overdue": {
+                        "description": "Pending and past its time — show in red",
+                        "type": "boolean"
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "call_status": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "Interested",
+                            "Not Answered",
+                            "Callback",
+                            "Closed"
+                        ]
+                    },
+                    "note": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Lead": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Ravi Kumar"
+                    },
+                    "mobile": {
+                        "type": "string",
+                        "example": "+91 98765 43210",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "ravi@acme.in",
+                        "nullable": true
+                    },
+                    "company": {
+                        "type": "string",
+                        "example": "Acme Traders",
+                        "nullable": true
+                    },
+                    "source": {
+                        "type": "string",
+                        "enum": [
+                            "WhatsApp",
+                            "Facebook",
+                            "Website",
+                            "Referral",
+                            "Call",
+                            "Walk-in",
+                            "Other"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "New",
+                            "Interested",
+                            "Follow-up",
+                            "Won",
+                            "Lost"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "High",
+                            "Medium",
+                            "Low"
+                        ]
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next_followup_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-11-12T15:30:00+05:30",
+                        "nullable": true
+                    },
+                    "next_followup_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2026-11-12",
+                        "nullable": true
+                    },
+                    "next_followup_time": {
+                        "type": "string",
+                        "example": "15:30",
+                        "nullable": true
+                    },
+                    "is_overdue": {
+                        "type": "boolean"
+                    },
+                    "followups_count": {
+                        "description": "Completed follow-up notes (list endpoints)",
+                        "type": "integer"
+                    },
+                    "followups": {
+                        "description": "Timeline (detail endpoint only)",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Followup"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Sales Admin"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "admin@example.com"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "properties": {
+                    "current_page": {
+                        "description": "Laravel paginator `meta` block returned by list endpoints.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 47
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "responses": {
+            "Unauthenticated": {
+                "description": "Missing or invalid token",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "description": "Global OpenAPI (Swagger) definitions: info, server, auth scheme, tags and shared components.\nEndpoint docs live as attributes on the controllers in app/Http/Controllers/Api.",
+                                    "type": "string",
+                                    "example": "Unauthenticated."
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Not found (or belongs to another user)",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "Record not found."
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "ValidationError": {
+                "description": "Validation failed",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "The name field is required."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "example": {
+                                        "name": [
+                                            "The name field is required."
+                                        ]
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "parameters": {
+            "page": {
+                "name": "page",
+                "in": "query",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "default": 1
+                }
+            },
+            "per_page": {
+                "name": "per_page",
+                "in": "query",
+                "description": "1–100",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "default": 20
+                }
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Paste the token from /api/auth/login",
+                "bearerFormat": "Sanctum token",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Register, login and token management"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Counters and today’s work"
+        },
+        {
+            "name": "Leads",
+            "description": "Lead CRUD and search"
+        },
+        {
+            "name": "Lead follow-ups",
+            "description": "Timeline and notes of a single lead"
+        },
+        {
+            "name": "Follow-ups",
+            "description": "Today / upcoming / overdue lists, complete, reschedule, reminders"
+        },
+        {
+            "name": "Import / Export",
+            "description": "Excel (.xlsx) and CSV"
+        },
+        {
+            "name": "Meta",
+            "description": "Dropdown options"
+        }
+    ]
+}
