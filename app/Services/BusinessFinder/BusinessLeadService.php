@@ -179,7 +179,7 @@ class BusinessLeadService
     public function leadAttributes(BusinessLead $b, array $options = []): array
     {
         $context = array_filter([
-            'Category: '.$b->category->value,
+            'Category: '.$b->category,
             ($b->city || $b->district) ? 'Location: '.implode(', ', array_filter([$b->area, $b->city, $b->district])) : null,
             $b->website_url ? 'Website: '.$b->website_url.' ('.$b->website_status->value.')' : 'Website: '.$b->website_status->value,
         ]);

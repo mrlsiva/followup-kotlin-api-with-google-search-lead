@@ -71,6 +71,38 @@ Each user sees only their own leads; another user's record returns 404.
 Local notifications are the Android app's job. The API supplies what it needs:
 `/api/followups/reminders` (each due time) and `/api/followups/daily-summary` (the daily message).
 
+## Web panel (Bootstrap 5, English + தமிழ்)
+
+Open the site root (`/`) and log in. Same database as the app; the web panel uses a normal session login,
+the Android app keeps using API tokens.
+
+| Area | Pages |
+|---|---|
+| CRM | Dashboard · Leads (search, filters, add/edit, details + timeline, call notes) · Follow-ups (today / overdue / upcoming / pending / completed, complete & reschedule) · Import / Export |
+| Business Finder | Finder dashboard · Search (Google Maps / Search links) · Add Business to CRM (live duplicate check, website check) · Saved businesses (filters, CSV/Excel/PDF export of filtered or selected rows) · Business details (contact & website verification, save to CRM, schedule a call) · Search history |
+| Team (admin, manager) | Team reports per salesperson with period filter, Excel/PDF export, recent activity |
+| Admin | Users: create, role, manager/team, language, enable/disable, reset password |
+
+**Roles**
+
+| Role | Sees | Can change |
+|---|---|---|
+| `sales` | own leads, follow-ups, businesses | own records |
+| `manager` | own + the salespeople assigned to them (`manager_id`) | own records; can reassign team leads |
+| `admin` | everyone + team reports + users | own records; can reassign any lead; manages users |
+
+Other people's records are read-only. The API stays owner-only for every role.
+
+- The oldest existing user becomes **admin** when the roles migration runs. To promote someone else:
+  `php artisan crm:make-admin someone@example.com`
+- **Public registration is off** (`ALLOW_REGISTRATION=false`): the admin creates accounts. `POST /api/auth/register`
+  returns 403 until you set `ALLOW_REGISTRATION=true`.
+- Disabled users cannot log in (web or app); disabling or resetting a password also revokes their app tokens.
+- Language switch in the top bar (saved per user). Translations: [lang/ta.json](lang/ta.json). Data stays in English
+  in the database, so the app and exports are unaffected.
+- Static files, no build step: [public/css/crm.css](public/css/crm.css), [public/js/crm.js](public/js/crm.js),
+  logos in `public/images/`. Bootstrap 5.3.3 and Bootstrap Icons load from jsDelivr.
+
 ## Business Lead Finder (`/api/business-finder/*`)
 
 Free, manual prospecting across Tamil Nadu. **No Google Places API, no scraping, no paid services.**

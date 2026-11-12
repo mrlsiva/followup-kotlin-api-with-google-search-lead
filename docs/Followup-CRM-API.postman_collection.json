@@ -1,0 +1,481 @@
+{
+  "info": {
+    "name": "Follow-up CRM API (with Business Lead Finder)",
+    "_postman_id": "6f0f6d8e-1b7a-4c2e-9a51-follow-up-crm-01",
+    "description": "REST API for the Lead Generation & Follow-up Android app, including the Business Lead Finder module.\n\n**How to use**\n1. Check the collection variable `base_url` (default: https://followup-api.slinggroups.in/api; for local XAMPP use http://localhost/followup-api-kotlin/public/api).\n2. Run **Auth → Login** (or Register). The token is saved to `token` automatically and used by every request.\n3. Requests that create records save their IDs (`lead_id`, `followup_id`, `business_lead_id`, `search_id`), so you can run the folders top to bottom.\n\n`{{tomorrow}}` is set automatically to tomorrow's date (YYYY-MM-DD) for follow-up scheduling.\n\nSwagger: https://followup-api.slinggroups.in/api/documentation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Always ask for JSON (validation errors come back as JSON, never as HTML)",
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });",
+          "",
+          "// {{tomorrow}} = tomorrow as YYYY-MM-DD (local time)",
+          "const d = new Date(); d.setDate(d.getDate() + 1);",
+          "const pad = n => String(n).padStart(2, '0');",
+          "pm.collectionVariables.set('tomorrow', `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "https://followup-api.slinggroups.in/api" },
+    { "key": "token", "value": "" },
+    { "key": "email", "value": "admin@example.com" },
+    { "key": "password", "value": "password" },
+    { "key": "lead_id", "value": "1" },
+    { "key": "followup_id", "value": "1" },
+    { "key": "business_lead_id", "value": "1" },
+    { "key": "search_id", "value": "" },
+    { "key": "history_id", "value": "1" },
+    { "key": "tomorrow", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 201) {",
+            "  pm.collectionVariables.set('token', pm.response.json().token);",
+            "  pm.test('Token saved', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+            "}"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Sales Admin\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"device_name\": \"Postman\"\n}" },
+            "description": "Create an account and get a token. Use this on a fresh server where no user exists yet."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "if (pm.response.code === 200) pm.collectionVariables.set('token', pm.response.json().token);"
+          ] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"device_name\": \"Postman\"\n}" },
+            "description": "Saves the bearer token to the `token` collection variable."
+          }
+        },
+        {
+          "name": "Me",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] } }
+        },
+        {
+          "name": "Logout",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 200) pm.collectionVariables.set('token', '');"
+          ] } }],
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }, "description": "Revokes the current token." }
+        }
+      ]
+    },
+    {
+      "name": "Meta & Dashboard",
+      "item": [
+        {
+          "name": "Options (dropdown values)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [], "url": { "raw": "{{base_url}}/options", "host": ["{{base_url}}"], "path": ["options"] }, "description": "Sources, statuses, priorities, call statuses. No auth." }
+        },
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/dashboard", "host": ["{{base_url}}"], "path": ["dashboard"] }, "description": "CRM counters, today's / overdue follow-ups, recent leads and the `business_finder` statistics block." }
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "List / search leads",
+          "request": {
+            "method": "GET", "header": [],
+            "url": {
+              "raw": "{{base_url}}/leads?search=&status=&priority=&source=&sort=latest&page=1&per_page=20",
+              "host": ["{{base_url}}"], "path": ["leads"],
+              "query": [
+                { "key": "search", "value": "", "description": "Name, company, phone or email" },
+                { "key": "status", "value": "", "description": "New | Interested | Follow-up | Won | Lost" },
+                { "key": "priority", "value": "", "description": "High | Medium | Low" },
+                { "key": "source", "value": "", "description": "WhatsApp | Facebook | Website | Referral | Call | Walk-in | Business Finder | Other" },
+                { "key": "sort", "value": "latest", "description": "latest | oldest | name | next_followup | priority" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add lead (with next follow-up)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 201) {",
+            "  const lead = pm.response.json().data;",
+            "  pm.collectionVariables.set('lead_id', lead.id);",
+            "  const pending = (lead.followups || []).find(f => f.status === 'pending');",
+            "  if (pending) pm.collectionVariables.set('followup_id', pending.id);",
+            "}"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/leads", "host": ["{{base_url}}"], "path": ["leads"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Ravi Kumar\",\n  \"mobile\": \"+91 98765 11111\",\n  \"email\": \"ravi@acme.in\",\n  \"company\": \"Acme Traders\",\n  \"source\": \"WhatsApp\",\n  \"status\": \"New\",\n  \"priority\": \"High\",\n  \"notes\": \"Wants a quote for 200 units\",\n  \"next_followup_date\": \"{{tomorrow}}\",\n  \"next_followup_time\": \"11:00\"\n}" }
+          }
+        },
+        {
+          "name": "Lead details (timeline)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/leads/{{lead_id}}", "host": ["{{base_url}}"], "path": ["leads", "{{lead_id}}"] }, "description": "Includes `followups` timeline and, for Business Finder leads, `business_lead`." }
+        },
+        {
+          "name": "Edit lead / reschedule",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/leads/{{lead_id}}", "host": ["{{base_url}}"], "path": ["leads", "{{lead_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Interested\",\n  \"next_followup_date\": \"{{tomorrow}}\",\n  \"next_followup_time\": \"16:00\"\n}" },
+            "description": "Send only the fields to change. `\"next_followup_date\": null` clears the schedule. Also used to schedule calls for leads saved from Business Finder."
+          }
+        },
+        {
+          "name": "Delete lead",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/leads/{{lead_id}}", "host": ["{{base_url}}"], "path": ["leads", "{{lead_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Lead follow-ups (timeline)",
+      "item": [
+        {
+          "name": "Follow-up history of a lead",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/leads/{{lead_id}}/followups", "host": ["{{base_url}}"], "path": ["leads", "{{lead_id}}", "followups"] } }
+        },
+        {
+          "name": "Add follow-up note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/leads/{{lead_id}}/followups", "host": ["{{base_url}}"], "path": ["leads", "{{lead_id}}", "followups"] },
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Asked for revised pricing\",\n  \"call_status\": \"Callback\",\n  \"schedule_next\": true\n}" },
+            "description": "Optional `date` (YYYY-MM-DD) and `time` (HH:MM) of the call — default now. `call_status`: Interested | Not Answered | Callback | Closed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Follow-ups",
+      "item": [
+        {
+          "name": "List follow-ups",
+          "request": {
+            "method": "GET", "header": [],
+            "url": {
+              "raw": "{{base_url}}/followups?type=today&search=&from=&to=",
+              "host": ["{{base_url}}"], "path": ["followups"],
+              "query": [
+                { "key": "type", "value": "today", "description": "today | upcoming | overdue | pending | completed" },
+                { "key": "search", "value": "" },
+                { "key": "from", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "to", "value": "", "description": "YYYY-MM-DD" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reminders (for local notifications)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/followups/reminders?days=7", "host": ["{{base_url}}"], "path": ["followups", "reminders"], "query": [{ "key": "days", "value": "7" }] } }
+        },
+        {
+          "name": "Daily summary",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/followups/daily-summary", "host": ["{{base_url}}"], "path": ["followups", "daily-summary"] } }
+        },
+        {
+          "name": "Follow-up details",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/followups/{{followup_id}}", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}"] } }
+        },
+        {
+          "name": "Complete follow-up (auto-schedules next)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 200 && pm.response.json().next_followup) pm.collectionVariables.set('followup_id', pm.response.json().next_followup.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/followups/{{followup_id}}/complete", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}", "complete"] },
+            "body": { "mode": "raw", "raw": "{\n  \"call_status\": \"Interested\",\n  \"note\": \"Spoke to owner, sending quotation\",\n  \"schedule_next\": true\n}" },
+            "description": "Next follow-up: Not Answered / Callback +1 day; Interested +1 (High) / +3 (Medium) / +5 (Low); Closed none. Time kept, Sundays skipped. Send next_followup_date/time to override."
+          }
+        },
+        {
+          "name": "Reschedule follow-up",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/followups/{{followup_id}}", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"next_followup_date\": \"{{tomorrow}}\",\n  \"next_followup_time\": \"15:30\"\n}" }
+          }
+        },
+        {
+          "name": "Delete note / cancel follow-up",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/followups/{{followup_id}}", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Import / Export (CRM leads)",
+      "item": [
+        {
+          "name": "Export leads (Excel)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/leads/export?format=xlsx", "host": ["{{base_url}}"], "path": ["leads", "export"], "query": [{ "key": "format", "value": "xlsx", "description": "xlsx | csv" }] }, "description": "Use **Send and Download** to save the file." }
+        },
+        {
+          "name": "Import leads (Excel / CSV)",
+          "request": {
+            "method": "POST", "header": [],
+            "url": { "raw": "{{base_url}}/leads/import", "host": ["{{base_url}}"], "path": ["leads", "import"] },
+            "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": [] }] },
+            "description": "Choose a .xlsx or .csv file in the Body tab. Required column: Customer Name. Rows matching an ID or mobile number update the existing lead."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business Finder",
+      "item": [
+        {
+          "name": "Options",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/options", "host": ["{{base_url}}"], "path": ["business-finder", "options"] }, "description": "Categories, quantities, website / contact statuses and filters, export scopes." }
+        },
+        {
+          "name": "Categories",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/categories", "host": ["{{base_url}}"], "path": ["business-finder", "categories"] } }
+        },
+        {
+          "name": "Locations (districts & towns)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/locations?district=", "host": ["{{base_url}}"], "path": ["business-finder", "locations"], "query": [{ "key": "district", "value": "", "description": "Optional, e.g. Madurai" }] } }
+        },
+        {
+          "name": "Generate search links",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 200) {",
+            "  const j = pm.response.json();",
+            "  if (j.search_id) pm.collectionVariables.set('search_id', j.search_id);",
+            "  console.log('Maps:', j.data.google_maps_url);",
+            "  console.log('Search:', j.data.google_search_url);",
+            "}"
+          ] } }],
+          "request": {
+            "method": "GET", "header": [],
+            "url": {
+              "raw": "{{base_url}}/business-finder/search-links?category=Hospitals&city=Chennai&district=&area=&pincode=&business_name=&match_type=partial&keywords=&quantity=20&website_filter=&contact_filter=",
+              "host": ["{{base_url}}"], "path": ["business-finder", "search-links"],
+              "query": [
+                { "key": "category", "value": "Hospitals", "description": "See Categories" },
+                { "key": "city", "value": "Chennai" },
+                { "key": "district", "value": "", "description": "One of the 38 Tamil Nadu districts" },
+                { "key": "area", "value": "" },
+                { "key": "pincode", "value": "", "description": "6 digits, starts with 6" },
+                { "key": "business_name", "value": "" },
+                { "key": "match_type", "value": "partial", "description": "exact | partial" },
+                { "key": "keywords", "value": "", "description": "Required for 'Other businesses'" },
+                { "key": "quantity", "value": "20", "description": "20 | 50 | 100" },
+                { "key": "website_filter", "value": "", "description": "All | No website found | Website available | ..." },
+                { "key": "contact_filter", "value": "", "description": "phone_available | phone_missing | pending | verified" }
+              ]
+            },
+            "description": "Builds free Google Maps / Google Search links (no Google API, no scraping) and saves the search to history. Returns `search_id`."
+          }
+        },
+        {
+          "name": "Search history",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 200 && pm.response.json().data.length) pm.collectionVariables.set('history_id', pm.response.json().data[0].id);"
+          ] } }],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/history?search=&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["business-finder", "history"], "query": [{ "key": "search", "value": "" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } }
+        },
+        {
+          "name": "Delete search from history",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/business-finder/history/{{history_id}}", "host": ["{{base_url}}"], "path": ["business-finder", "history", "{{history_id}}"] } }
+        },
+        {
+          "name": "Suggestions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/suggestions", "host": ["{{base_url}}"], "path": ["business-finder", "suggestions"] } }
+        },
+        {
+          "name": "Business Finder dashboard",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/dashboard", "host": ["{{base_url}}"], "path": ["business-finder", "dashboard"] } }
+        },
+        {
+          "name": "Check duplicate",
+          "request": {
+            "method": "GET", "header": [],
+            "url": {
+              "raw": "{{base_url}}/business-finder/check-duplicate?phone=%2B91%2098400%2012345&business_name=Sri%20Lakshmi%20Hospital&city=Chennai",
+              "host": ["{{base_url}}"], "path": ["business-finder", "check-duplicate"],
+              "query": [
+                { "key": "phone", "value": "%2B91%2098400%2012345" },
+                { "key": "business_name", "value": "Sri%20Lakshmi%20Hospital" },
+                { "key": "city", "value": "Chennai" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify website (ad-hoc, not saved)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/verify-website", "host": ["{{base_url}}"], "path": ["business-finder", "verify-website"] },
+            "body": { "mode": "raw", "raw": "{\n  \"url\": \"example.com\"\n}" },
+            "description": "Max 10 checks per minute. A failed check never means the website does not exist."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business Finder leads",
+      "item": [
+        {
+          "name": "Add Business to CRM",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 201) {",
+            "  const j = pm.response.json();",
+            "  pm.collectionVariables.set('business_lead_id', j.data.id);",
+            "  if (j.lead) pm.collectionVariables.set('lead_id', j.lead.id);",
+            "}",
+            "if (pm.response.code === 409) console.log('Duplicate:', JSON.stringify(pm.response.json().duplicate));"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/leads", "host": ["{{base_url}}"], "path": ["business-finder", "leads"] },
+            "body": { "mode": "raw", "raw": "{\n  \"business_name\": \"Sri Lakshmi Hospital\",\n  \"category\": \"Hospitals\",\n  \"contact_person\": \"Dr. Senthil\",\n  \"phone\": \"+91 98400 12345\",\n  \"email\": \"\",\n  \"website_url\": \"\",\n  \"website_status\": \"No website found\",\n  \"contact_status\": \"Pending\",\n  \"contact_source\": \"Google Maps listing\",\n  \"source_url\": \"https://maps.google.com/\",\n  \"address\": \"12, Main Road\",\n  \"area\": \"Anna Nagar\",\n  \"city\": \"Chennai\",\n  \"district\": \"Chennai\",\n  \"pincode\": \"600040\",\n  \"notes\": \"Found on Maps, no website\",\n  \"save_to_crm\": true,\n  \"on_duplicate\": \"reject\",\n  \"priority\": \"Medium\",\n  \"next_followup_date\": \"{{tomorrow}}\",\n  \"next_followup_time\": \"11:00\"\n}" },
+            "description": "Creates the business and a CRM lead (company = business name, name = contact person, mobile = phone, source = Business Finder, status New, priority Medium) and schedules the first call.\n\n- `save_to_crm: false` keeps it as researched only (save later with Convert).\n- 409 = phone already exists; resend with `\"on_duplicate\": \"link\"` to attach to the existing lead.\n- Optional: add `\"business_search_id\": <search_id from Generate search links>` to link the business to that search in history."
+          }
+        },
+        {
+          "name": "List businesses",
+          "request": {
+            "method": "GET", "header": [],
+            "url": {
+              "raw": "{{base_url}}/business-finder/leads?search=&category=&city=&district=&website_status=&contact_status=&contact=&saved=&lead_status=&scope=all&sort=latest&page=1&per_page=20",
+              "host": ["{{base_url}}"], "path": ["business-finder", "leads"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "category", "value": "" },
+                { "key": "city", "value": "" },
+                { "key": "district", "value": "" },
+                { "key": "website_status", "value": "", "description": "No website found | Website available | Website outdated | Website inactive | Pending verification" },
+                { "key": "contact_status", "value": "", "description": "Pending | Verified | Incorrect number | Disconnected | Do not contact" },
+                { "key": "contact", "value": "", "description": "phone_available | phone_missing | pending | verified" },
+                { "key": "saved", "value": "", "description": "1 = saved to CRM, 0 = not yet" },
+                { "key": "lead_status", "value": "", "description": "Status of the CRM lead" },
+                { "key": "scope", "value": "all", "description": "all | verified_contacts | no_website | followups" },
+                { "key": "sort", "value": "latest", "description": "latest | oldest | name | city" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Business details",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}"] }, "description": "Business record plus the full CRM lead with its follow-up timeline." }
+        },
+        {
+          "name": "Edit business",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"info@srilakshmihospital.in\",\n  \"website_url\": \"srilakshmihospital.in\",\n  \"website_status\": \"Website outdated\",\n  \"notes\": \"Old site, no HTTPS\"\n}" },
+            "description": "Send only the fields to change. Business name, contact person, phone and email are copied to the linked CRM lead."
+          }
+        },
+        {
+          "name": "Save to CRM (convert)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if (pm.response.code === 200 && pm.response.json().lead) pm.collectionVariables.set('lead_id', pm.response.json().lead.id);"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}/convert", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}", "convert"] },
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"High\",\n  \"lead_status\": \"New\",\n  \"on_duplicate\": \"reject\",\n  \"next_followup_date\": \"{{tomorrow}}\",\n  \"next_followup_time\": \"10:30\"\n}" },
+            "description": "For businesses added with save_to_crm=false. 409 if already saved."
+          }
+        },
+        {
+          "name": "Verify contact",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}/verify-contact", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}", "verify-contact"] },
+            "body": { "mode": "raw", "raw": "{\n  \"verification_status\": \"Verified\",\n  \"contact_person\": \"Dr. Senthil\",\n  \"contact_source\": \"Called the listed number\",\n  \"verification_date\": \"\",\n  \"notes\": \"Owner available after 5 pm\"\n}" },
+            "description": "`verification_status`: Pending | Verified | Incorrect number | Disconnected | Do not contact.\n\n`Do not contact` cancels the CRM lead's pending follow-up, blocks new scheduling and excludes the record from exports. `verification_date` defaults to today."
+          }
+        },
+        {
+          "name": "Verify website (saved)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}/verify-website", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}", "verify-website"] },
+            "body": { "mode": "raw", "raw": "{\n  \"url\": \"example.com\"\n}" },
+            "description": "`url` optional — defaults to the saved website. Stores last checked date, HTTP status and result. Status changes only when the site clearly responds (→ Website available)."
+          }
+        },
+        {
+          "name": "Delete business",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/business-finder/leads/{{business_lead_id}}", "host": ["{{base_url}}"], "path": ["business-finder", "leads", "{{business_lead_id}}"] }, "description": "The linked CRM lead is kept." }
+        }
+      ]
+    },
+    {
+      "name": "Business Finder exports",
+      "description": "Use **Send and Download** to save the file. Do-not-contact records are excluded unless include_do_not_contact=1. Limit: 10 exports per minute.",
+      "item": [
+        {
+          "name": "Export CSV (all)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/csv?scope=all", "host": ["{{base_url}}"], "path": ["business-finder", "export", "csv"], "query": [{ "key": "scope", "value": "all" }] } }
+        },
+        {
+          "name": "Export Excel (verified contacts)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/excel?scope=verified_contacts", "host": ["{{base_url}}"], "path": ["business-finder", "export", "excel"], "query": [{ "key": "scope", "value": "verified_contacts" }] } }
+        },
+        {
+          "name": "Export Excel (no website)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/excel?scope=no_website", "host": ["{{base_url}}"], "path": ["business-finder", "export", "excel"], "query": [{ "key": "scope", "value": "no_website" }] } }
+        },
+        {
+          "name": "Export PDF (follow-up list)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/pdf?scope=followups", "host": ["{{base_url}}"], "path": ["business-finder", "export", "pdf"], "query": [{ "key": "scope", "value": "followups" }] } }
+        },
+        {
+          "name": "Export CSV (selected IDs)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/csv?ids[]={{business_lead_id}}", "host": ["{{base_url}}"], "path": ["business-finder", "export", "csv"], "query": [{ "key": "ids[]", "value": "{{business_lead_id}}", "description": "Repeat ids[] for more records" }] } }
+        },
+        {
+          "name": "Export PDF (filtered)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/business-finder/export/pdf?category=Hospitals&city=Chennai&contact=phone_available", "host": ["{{base_url}}"], "path": ["business-finder", "export", "pdf"], "query": [{ "key": "category", "value": "Hospitals" }, { "key": "city", "value": "Chennai" }, { "key": "contact", "value": "phone_available" }] }, "description": "All list filters work here too." }
+        }
+      ]
+    }
+  ]
+}

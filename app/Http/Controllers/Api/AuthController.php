@@ -31,11 +31,15 @@ class AuthController extends Controller
         ])),
         responses: [
             new OA\Response(response: 201, description: 'Registered', content: new OA\JsonContent(ref: '#/components/schemas/AuthToken')),
+            new OA\Response(response: 403, description: 'Registration is closed (ALLOW_REGISTRATION=false); the admin creates users in the web panel'),
             new OA\Response(response: 422, ref: '#/components/responses/ValidationError'),
         ]
     )]
     public function register(RegisterRequest $request): JsonResponse
     {
+        if (! config('crm.allow_registration')) {
+            return response()->json(['message' => 'Registration is closed. Ask your administrator for an account.'], 403);
+        }
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -63,6 +67,10 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages(['email' => 'These credentials do not match our records.']);
         }
+        if (! $user->is_active) {
+            throw ValidationException::withMessages(['email' => 'This account has been disabled. Contact your administrator.']);
+        }
+        $user->forceFill(['last_login_at' => now()])->save();
 
         return response()->json($this->tokenPayload($user, $request->input('device_name')));
     }

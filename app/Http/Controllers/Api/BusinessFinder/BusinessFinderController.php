@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api\BusinessFinder;
 
-use App\Enums\BusinessCategory;
+use App\Models\FinderCategory;
+use App\Support\Categories;
 use App\Enums\ContactStatus;
 use App\Enums\WebsiteStatus;
 use App\Http\Controllers\Controller;
@@ -93,7 +94,7 @@ class BusinessFinderController extends Controller
     public function options(): JsonResponse
     {
         return response()->json([
-            'categories' => BusinessCategory::values(),
+            'categories' => Categories::searchable(),
             'quantities' => config('business_finder.quantities'),
             'website_statuses' => WebsiteStatus::values(),
             'website_filters' => ['All', ...WebsiteStatus::values()],
@@ -110,11 +111,12 @@ class BusinessFinderController extends Controller
     }
 
     #[OA\Get(
-        path: '/api/business-finder/categories', summary: 'Business categories', tags: ['Business Finder'], security: [['sanctum' => []]],
+        path: '/api/business-finder/categories', summary: 'Business categories (managed by admins in the web panel)', tags: ['Business Finder'], security: [['sanctum' => []]],
         responses: [
-            new OA\Response(response: 200, description: 'OK', content: new OA\JsonContent(properties: [
+            new OA\Response(response: 200, description: 'Active categories in display order', content: new OA\JsonContent(properties: [
                 new OA\Property(property: 'data', type: 'array', items: new OA\Items(properties: [
-                    new OA\Property(property: 'value', type: 'string', example: 'Hospitals'),
+                    new OA\Property(property: 'value', type: 'string', example: 'Hospitals', description: 'Send this value as `category`'),
+                    new OA\Property(property: 'label_ta', type: 'string', nullable: true, example: 'மருத்துவமனைகள்'),
                     new OA\Property(property: 'search_term', type: 'string', example: 'Hospitals'),
                     new OA\Property(property: 'assignable', type: 'boolean', description: 'false for "All businesses" (search filter only)'),
                     new OA\Property(property: 'needs_keywords', type: 'boolean', description: 'true for "Other businesses"'),
@@ -125,12 +127,13 @@ class BusinessFinderController extends Controller
     )]
     public function categories(): JsonResponse
     {
-        return response()->json(['data' => array_map(fn (BusinessCategory $c) => [
-            'value' => $c->value,
-            'search_term' => $c->searchTerm(),
-            'assignable' => $c !== BusinessCategory::All,
-            'needs_keywords' => $c === BusinessCategory::Other,
-        ], BusinessCategory::cases())]);
+        return response()->json(['data' => Categories::active()->map(fn (FinderCategory $c) => [
+            'value' => $c->name,
+            'label_ta' => $c->name_ta,
+            'search_term' => $c->term(),
+            'assignable' => $c->isAssignable(),
+            'needs_keywords' => $c->system === 'other',
+        ])->values()]);
     }
 
     #[OA\Get(
@@ -279,19 +282,19 @@ class BusinessFinderController extends Controller
         }
 
         $recentPairs = $user->businessSearches()->where('created_at', '>=', now()->subDays(30))
-            ->get(['category', 'city'])->map(fn ($s) => strtolower(($s->category?->value ?? '').'|'.$s->city))->flip();
+            ->get(['category', 'city'])->map(fn ($s) => strtolower(($s->category ?? '').'|'.$s->city))->flip();
 
         $suggested = [];
         foreach ($cities as $city) {
-            foreach (BusinessCategory::cases() as $cat) {
-                if (in_array($cat, [BusinessCategory::All, BusinessCategory::Other], true) || isset($recentPairs[strtolower("{$cat->value}|$city")])) {
+            foreach (Categories::active() as $cat) {
+                if ($cat->isSystem() || isset($recentPairs[strtolower("{$cat->name}|$city")])) {
                     continue;
                 }
                 $suggested[] = [
-                    'category' => $cat->value,
+                    'category' => $cat->name,
                     'city' => $city,
                     'reason' => $usual ? "Not searched in $city in the last 30 days" : 'Popular starting point',
-                    'links' => $builder->build(['category' => $cat->value, 'city' => $city]),
+                    'links' => $builder->build(['category' => $cat->name, 'city' => $city]),
                 ];
                 if (count($suggested) >= 8) {
                     break 2;

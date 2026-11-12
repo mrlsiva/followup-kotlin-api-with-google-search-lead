@@ -68,6 +68,9 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "Registration is closed (ALLOW_REGISTRATION=false); the admin creates users in the web panel"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationError"
                     }
@@ -292,11 +295,11 @@
                 "tags": [
                     "Business Finder"
                 ],
-                "summary": "Business categories",
+                "summary": "Business categories (managed by admins in the web panel)",
                 "operationId": "58bda61dcd2a6a398afac9b435cd42e2",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Active categories in display order",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -306,8 +309,14 @@
                                             "items": {
                                                 "properties": {
                                                     "value": {
+                                                        "description": "Send this value as `category`",
                                                         "type": "string",
                                                         "example": "Hospitals"
+                                                    },
+                                                    "label_ta": {
+                                                        "type": "string",
+                                                        "example": "மருத்துவமனைகள்",
+                                                        "nullable": true
                                                     },
                                                     "search_term": {
                                                         "type": "string",

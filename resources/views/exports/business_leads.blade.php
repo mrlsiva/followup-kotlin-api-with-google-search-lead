@@ -48,7 +48,7 @@
         <tr>
             <td>{{ $b->id }}</td>
             <td><strong>{{ $b->business_name }}</strong>@if ($b->email)<br><span class="muted">{{ $b->email }}</span>@endif</td>
-            <td>{{ $b->category->value }}</td>
+            <td>{{ $b->category }}</td>
             <td>{{ $b->contact_person ?: '—' }}</td>
             <td>{{ $b->phone ?: '—' }}</td>
             <td>{{ collect([$b->area, $b->city, $b->district])->filter()->implode(', ') ?: '—' }}@if ($b->pincode) {{ $b->pincode }}@endif</td>

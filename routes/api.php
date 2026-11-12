@@ -23,20 +23,20 @@ Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register'])->middleware('throttle:10,1');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::get('dashboard', DashboardController::class);
 
     // Import / export (declared before the {lead} routes)
     Route::get('leads/export', [LeadTransferController::class, 'export']);
     Route::post('leads/import', [LeadTransferController::class, 'import']);
 
-    Route::apiResource('leads', LeadController::class);
+    Route::apiResource('leads', LeadController::class)->names('api.leads');
     Route::get('leads/{lead}/followups', [LeadFollowupController::class, 'index']);
     Route::post('leads/{lead}/followups', [LeadFollowupController::class, 'store']);
 

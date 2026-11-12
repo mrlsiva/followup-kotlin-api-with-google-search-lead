@@ -61,7 +61,7 @@ class BusinessLeadResource extends JsonResource
         return [
             'id' => $this->id,
             'business_name' => $this->business_name,
-            'category' => $this->category?->value,
+            'category' => $this->category,
             'contact_person' => $this->contact_person,
             'phone' => $this->phone,
             'email' => $this->email,

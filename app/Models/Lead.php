@@ -55,6 +55,14 @@ class Lead extends Model
         return $this->hasMany(Followup::class);
     }
 
+    /** Leads the given user may view (own, team or all — see User::visibleUserIds). */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        $ids = $user->visibleUserIds();
+
+        return $ids === null ? $query : $query->whereIn($query->qualifyColumn('user_id'), $ids);
+    }
+
     /** Search by name, company or phone. */
     public function scopeSearch(Builder $query, ?string $term): Builder
     {

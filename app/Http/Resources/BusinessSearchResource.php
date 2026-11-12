@@ -40,7 +40,7 @@ class BusinessSearchResource extends JsonResource
             'business_name' => $this->business_name,
             'match_type' => $this->match_type,
             'keywords' => $this->keywords,
-            'category' => $this->category?->value,
+            'category' => $this->category,
             'state' => $this->state,
             'district' => $this->district,
             'city' => $this->city,
@@ -52,7 +52,7 @@ class BusinessSearchResource extends JsonResource
             'businesses_saved' => $this->whenCounted('businessLeads'),
             'links' => app(SearchLinkBuilder::class)->build([...$this->resource->only([
                 'business_name', 'match_type', 'keywords', 'district', 'city', 'area', 'pincode', 'quantity',
-            ]), 'category' => $this->category?->value]),
+            ]), 'category' => $this->category]),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\BusinessCategory;
 use App\Enums\ContactStatus;
 use App\Enums\WebsiteStatus;
 use App\Support\Phone;
@@ -25,10 +24,18 @@ class BusinessLead extends Model
         'website_status', 'contact_status', 'contact_source', 'contact_verified_at', 'notes',
     ];
 
+    /** Defaults for new models (match the column defaults). */
+    protected $attributes = [
+        'category' => 'Other businesses',
+        'website_status' => 'Pending verification',
+        'contact_status' => 'Pending',
+        'state' => 'Tamil Nadu',
+        'do_not_contact' => false,
+    ];
+
     protected function casts(): array
     {
         return [
-            'category' => BusinessCategory::class,
             'website_status' => WebsiteStatus::class,
             'contact_status' => ContactStatus::class,
             'website_checked_at' => 'datetime',
@@ -68,6 +75,13 @@ class BusinessLead extends Model
     }
 
     // ---------- Scopes ----------
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        $ids = $user->visibleUserIds();
+
+        return $ids === null ? $query : $query->whereIn($query->qualifyColumn('user_id'), $ids);
+    }
 
     /** Business name, contact person, phone, email, city or area. */
     public function scopeSearch(Builder $query, ?string $term): Builder

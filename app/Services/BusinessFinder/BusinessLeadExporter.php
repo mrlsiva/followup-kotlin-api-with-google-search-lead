@@ -25,9 +25,9 @@ class BusinessLeadExporter
     public function __construct(private readonly LeadTransferService $transfer) {}
 
     /** @return array{path: string, count: int} */
-    public function export(User $user, array $filters, string $format): array
+    public function export(User $user, array $filters, string $format, ?Builder $base = null): array
     {
-        $query = $this->query($user, $filters);
+        $query = $this->query($user, $filters, $base);
         $count = (clone $query)->count();
 
         if ($format === 'pdf') {
@@ -55,9 +55,9 @@ class BusinessLeadExporter
         return ['path' => $this->transfer->writeSheet($format, self::HEADERS, $rows, 'business_leads_'), 'count' => $count];
     }
 
-    private function query(User $user, array $filters): Builder
+    private function query(User $user, array $filters, ?Builder $base = null): Builder
     {
-        $q = BusinessLeadQuery::build($user, $filters)->with('lead');
+        $q = BusinessLeadQuery::build($user, $filters, $base)->with('lead');
         if (! filter_var($filters['include_do_not_contact'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             $q->contactable();
         }
@@ -73,7 +73,7 @@ class BusinessLeadExporter
         return [
             $b->id,
             $b->business_name,
-            $b->category->value,
+            $b->category,
             (string) $b->contact_person,
             (string) $b->phone,
             (string) $b->email,

@@ -20,10 +20,39 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Route model binding scoped to the authenticated user: other users' records are a 404.
-        Route::bind('lead', fn (string $value) => Lead::where('user_id', auth()->id())->findOrFail((int) $value));
-        Route::bind('followup', fn (string $value) => Followup::where('user_id', auth()->id())->findOrFail((int) $value));
-        Route::bind('businessLead', fn (string $value) => BusinessLead::where('user_id', auth()->id())->findOrFail((int) $value));
+        // Route model binding scoped to the authenticated user: records outside the user's reach are a 404.
+        // API (mobile app): own records only. Web panel: own, team (managers) or all (admins) may be VIEWED;
+        // web controllers still allow changes only by the owner.
+        $scoped = function (string $model) {
+            return function (string $value) use ($model) {
+                $user = auth()->user();
+                $query = $model::query();
+                if (request()->is('api/*') || ! $user) {
+                    $query->where('user_id', auth()->id());
+                } elseif (($ids = $user->visibleUserIds()) !== null) {
+                    $query->whereIn('user_id', $ids);
+                }
+
+                return $query->findOrFail((int) $value);
+            };
+        };
+        Route::bind('lead', $scoped(Lead::class));
+        Route::bind('followup', $scoped(Followup::class));
+        Route::bind('businessLead', $scoped(BusinessLead::class));
+        Route::bind('managedUser', fn (string $value) => \App\Models\User::findOrFail((int) $value));
+        Route::bind('category', fn (string $value) => \App\Models\FinderCategory::findOrFail((int) $value));
+        \App\Support\Categories::flush();   // fresh category list for every app instance
+
+        // Bootstrap 5 pagination links in the web panel
+        \Illuminate\Pagination\Paginator::useBootstrapFive();
+
+        // Sidebar badge: follow-ups due today or overdue
+        \Illuminate\Support\Facades\View::composer('layouts.app', function ($view) {
+            if ($user = auth()->user()) {
+                $view->with('dueCount', $user->followups()->activeLead()->pending()
+                    ->where('scheduled_at', '<=', now()->endOfDay())->count());
+            }
+        });
 
         // Business Lead Finder rate limits (per user)
         $key = fn (Request $r) => $r->user()?->id ?: $r->ip();

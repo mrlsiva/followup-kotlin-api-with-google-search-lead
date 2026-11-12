@@ -2,7 +2,7 @@
 
 namespace App\Services\BusinessFinder;
 
-use App\Enums\BusinessCategory;
+use App\Support\Categories;
 use App\Enums\ContactStatus;
 use App\Enums\LeadStatus;
 use App\Enums\WebsiteStatus;
@@ -20,7 +20,7 @@ class BusinessLeadQuery
     {
         return [
             'search' => ['nullable', 'string', 'max:100'],
-            'category' => ['nullable', Rule::enum(BusinessCategory::class)],
+            'category' => ['nullable', 'string', 'max:40'],     // any stored category (incl. deactivated ones)
             'city' => ['nullable', 'string', 'max:80'],
             'district' => ['nullable', 'string', 'max:60'],
             'website_status' => ['nullable', Rule::enum(WebsiteStatus::class)],
@@ -36,11 +36,12 @@ class BusinessLeadQuery
         ];
     }
 
-    public static function build(User $user, array $f): Builder
+    /** $base: optional starting query (web team views); defaults to the user's own records. */
+    public static function build(User $user, array $f, ?Builder $base = null): Builder
     {
-        $q = $user->businessLeads()->getQuery()
+        $q = ($base ?? $user->businessLeads()->getQuery())
             ->search($f['search'] ?? null)
-            ->when($f['category'] ?? null, fn ($q, $v) => $v === BusinessCategory::All->value ? $q : $q->where('category', $v))
+            ->when($f['category'] ?? null, fn ($q, $v) => $v === Categories::ALL ? $q : $q->where('category', $v))
             ->when($f['city'] ?? null, fn ($q, $v) => $q->where('city', $v))
             ->when($f['district'] ?? null, fn ($q, $v) => $q->where('district', $v))
             ->when($f['website_status'] ?? null, fn ($q, $v) => $q->where('website_status', $v))

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@example.com'],
             ['name' => 'Sales Admin', 'password' => Hash::make('password')]
         );
+        $user->forceFill(['role' => 'admin', 'is_active' => true])->save();
 
         $leads = [
             ['Ravi Kumar', '+91 98765 43210', 'ravi@acmetraders.in', 'Acme Traders', 'WhatsApp', 'Interested', 'High', 'Needs quote for 200 units', today()->setTime(11, 0)],

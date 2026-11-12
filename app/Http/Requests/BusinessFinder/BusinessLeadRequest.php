@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\BusinessFinder;
 
-use App\Enums\BusinessCategory;
+use App\Support\Categories;
 use App\Enums\ContactStatus;
 use App\Enums\LeadPriority;
 use App\Enums\LeadStatus;
@@ -43,7 +43,8 @@ class BusinessLeadRequest extends FormRequest
 
         return [
             'business_name' => [$creating ? 'required' : 'sometimes', 'string', 'max:150'],
-            'category' => ['sometimes', Rule::in(BusinessCategory::assignable())],
+            // Active categories; a business keeps its current one even if the admin deactivated it
+            'category' => ['sometimes', Rule::in(Categories::assignable($this->route('businessLead')?->category))],
             'contact_person' => ['nullable', 'string', 'max:150'],
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9 ()-]{6,20}$/'],
             'email' => ['nullable', 'email', 'max:150'],

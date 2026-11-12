@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\BusinessFinder;
 
-use App\Enums\BusinessCategory;
+use App\Support\Categories;
 use App\Enums\WebsiteStatus;
 use App\Services\BusinessFinder\BusinessLeadQuery;
 use Illuminate\Foundation\Http\FormRequest;
@@ -16,7 +16,7 @@ class SearchLinksRequest extends FormRequest
             'business_name' => ['nullable', 'string', 'max:150'],
             'match_type' => ['nullable', Rule::in(['exact', 'partial'])],
             'keywords' => ['nullable', 'string', 'max:150'],
-            'category' => ['nullable', Rule::enum(BusinessCategory::class)],
+            'category' => ['nullable', Rule::in(Categories::searchable())],
             'district' => ['nullable', Rule::in(array_keys(config('business_finder.districts')))],
             'city' => ['nullable', 'string', 'max:80'],
             'area' => ['nullable', 'string', 'max:100'],
@@ -41,7 +41,7 @@ class SearchLinksRequest extends FormRequest
             if ($name === '' && $keywords === '' && ! $this->filled('category')) {
                 $v->errors()->add('category', 'Choose a category or enter a business name or keywords.');
             }
-            if ($this->input('category') === BusinessCategory::Other->value && $name === '' && $keywords === '') {
+            if ($this->input('category') === Categories::OTHER && $name === '' && $keywords === '') {
                 $v->errors()->add('keywords', 'For "Other businesses", enter keywords such as "bakery" or "printing press".');
             }
         });

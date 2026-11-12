@@ -2,7 +2,7 @@
 
 namespace App\Services\BusinessFinder;
 
-use App\Enums\BusinessCategory;
+use App\Support\Categories;
 
 /**
  * Builds free, manual-research links (Google Maps / Google Search). Nothing is fetched or
@@ -53,15 +53,15 @@ class SearchLinkBuilder
     {
         $name = trim((string) ($p['business_name'] ?? ''));
         $keywords = trim((string) ($p['keywords'] ?? ''));
-        $category = BusinessCategory::tryFrom((string) ($p['category'] ?? ''));
+        $category = trim((string) ($p['category'] ?? ''));
 
         if ($name !== '') {
             $name = ($p['match_type'] ?? 'partial') === 'exact' ? '"'.str_replace('"', '', $name).'"' : $name;
 
             return trim("$name $keywords");
         }
-        if ($category && ! in_array($category, [BusinessCategory::All, BusinessCategory::Other], true)) {
-            return trim($category->searchTerm().' '.$keywords);
+        if ($category !== '' && ! in_array($category, [Categories::ALL, Categories::OTHER], true)) {
+            return trim(Categories::searchTerm($category).' '.$keywords);
         }
 
         return $keywords !== '' ? $keywords : 'Businesses';

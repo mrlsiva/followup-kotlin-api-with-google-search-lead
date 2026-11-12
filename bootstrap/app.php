@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,8 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // API-only app: never redirect guests to a login page — respond 401 JSON instead.
-        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/api/documentation');
+        // API guests get 401 JSON; web guests go to the login page.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
+        $middleware->redirectUsersTo('/');
+
+        $middleware->web(append: [SetLocale::class]);
+        $middleware->alias([
+            'active' => EnsureUserIsActive::class,
+            'role' => EnsureRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Always answer API routes with JSON, even without an Accept header (mobile clients).
