@@ -43,7 +43,8 @@ class LeadApiTest extends TestCase
         $this->app['auth']->forgetGuards();
 
         $this->postJson('/api/auth/login', ['email' => 'a@b.com', 'password' => 'secret123'])
-            ->assertOk()->assertJsonStructure(['token', 'token_type', 'user' => ['id', 'email']]);
+            ->assertOk()->assertJsonStructure(['token', 'token_type', 'user' => ['id', 'email', 'role', 'can_use_crm']])
+            ->assertJsonPath('user.role', 'sales')->assertJsonPath('user.can_use_crm', true);
         $this->postJson('/api/auth/login', ['email' => 'a@b.com', 'password' => 'nope'])->assertUnprocessable();
         $this->get('/api/leads')->assertUnauthorized()->assertJson(['message' => 'Unauthenticated.']);
     }

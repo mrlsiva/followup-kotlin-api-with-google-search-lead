@@ -99,7 +99,8 @@ The API stays owner-only for every role.
 manager (or an admin) opens the business, picks **Assign lead to** and clicks *Save to CRM*: the lead and its first call go
 to that salesperson, while the business stays credited to the researcher. In the web panel the CRM menus are hidden and
 `/` opens the Finder dashboard. In the API, `/api/business-finder/*` works and the lead, follow-up and dashboard endpoints
-(and `business-finder/leads/{id}/convert`) return 403.
+(and `business-finder/leads/{id}/convert`) return 403. The login and `/api/auth/me` responses include `role` and
+`can_use_crm`: when `can_use_crm` is `false`, the app should show only the Business Finder screens.
 
 - The oldest existing user becomes **admin** when the roles migration runs. To promote someone else:
   `php artisan crm:make-admin someone@example.com`

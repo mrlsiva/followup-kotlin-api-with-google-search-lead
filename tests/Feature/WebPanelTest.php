@@ -248,6 +248,7 @@ class WebPanelTest extends TestCase
 
         // API: Business Finder works, CRM endpoints are refused
         Sanctum::actingAs($researcher);
+        $this->getJson('/api/auth/me')->assertOk()->assertJsonPath('data.role', 'researcher')->assertJsonPath('data.can_use_crm', false);
         $this->getJson('/api/business-finder/leads')->assertOk()->assertJsonPath('data.0.business_name', 'Sun Clinic');
         $this->postJson('/api/business-finder/leads', ['business_name' => 'Moon Store', 'category' => 'Hospitals', 'phone' => '9444444444'])
             ->assertCreated()->assertJsonPath('lead', null);
