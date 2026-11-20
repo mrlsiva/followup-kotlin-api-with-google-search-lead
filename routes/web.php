@@ -47,6 +47,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('followups/{followup}/complete', [FollowupController::class, 'complete'])->name('followups.complete');
         Route::put('followups/{followup}', [FollowupController::class, 'reschedule'])->name('followups.reschedule');
         Route::delete('followups/{followup}', [FollowupController::class, 'destroy'])->name('followups.destroy');
+        Route::get('followups/{followup}/recording', [FollowupController::class, 'recording'])->name('followups.recording');
     });
 
     // Business Lead Finder

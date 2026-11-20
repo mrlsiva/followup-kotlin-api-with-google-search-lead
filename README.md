@@ -46,6 +46,7 @@ Each user sees only their own leads; another user's record returns 404.
 | GET | `/api/followups?type=today\|upcoming\|overdue\|pending\|completed` | Follow-up module lists. `is_overdue: true` means show it in red |
 | POST | `/api/followups/{id}/complete` | Mark completed. Auto-schedules the next follow-up |
 | PUT / DELETE | `/api/followups/{id}` | Reschedule / cancel or delete a note |
+| POST / GET / DELETE | `/api/followups/{id}/recording` | Upload or replace (multipart `recording`) / play or download (`?download=1`) / delete the call recording of a note |
 | GET | `/api/followups/reminders?days=7` | Upcoming pending items, for scheduling local notifications on the phone |
 | GET | `/api/followups/daily-summary` | Text and counts for the daily pending-follow-ups reminder |
 | GET | `/api/leads/export?format=xlsx\|csv` | Download leads as Excel or CSV |
@@ -66,6 +67,31 @@ Each user sees only their own leads; another user's record returns 404.
   The time of day is kept and Sundays are skipped.
 - Lead status follows obvious outcomes: Interested → `Interested`; Callback / Not Answered on a
   `New` lead → `Follow-up`.
+
+### Call details and recordings
+The phone makes the call; the app sends what happened to the backend. Both `POST /api/leads/{id}/followups` and
+`POST /api/followups/{id}/complete` accept these optional fields next to `call_status` and `note`:
+
+| Field | Example | Notes |
+|---|---|---|
+| `call_direction` | `outgoing` | `outgoing` or `incoming` |
+| `phone_number` | `+919876543210` | number dialled / received (max 32 chars) |
+| `call_started_at` | `2026-11-20T14:30:05+05:30` | ISO 8601 from the call log; used as the note's date/time when `date`/`time` are not sent |
+| `call_ended_at` | `2026-11-20T14:33:10+05:30` | must be ≥ start |
+| `call_duration` | `185` | seconds talked; computed from start/end when omitted |
+| `recording` | *(file)* | send the request as `multipart/form-data` |
+
+**Recording formats:** `m4a` (recommended: AAC in MP4, small and plays in Android MediaPlayer/ExoPlayer and browsers),
+`mp4`, `aac`, `mp3`, `amr`, `3gp`, `ogg`, `opus`, `wav`, `webm`. Both the file extension and the detected content must be
+audio. Max size `CALL_RECORDING_MAX_MB` (default 25 MB). `GET /api/options` returns `call_directions`,
+`recording_formats` and `recording_max_mb`.
+
+Recordings are stored on the private disk (`storage/app/private/recordings/{user_id}/`), never under `public/`.
+Each note's JSON has `has_recording` and `recording: {url, format, mime, size}`; fetch `url` with the Bearer token
+(Range requests are supported, so seeking works). A recording can only be attached to a completed note (409 on a pending
+follow-up). If the upload is large or fails, save the note first and upload later with `POST /api/followups/{id}/recording`.
+Replacing or deleting a recording, or deleting the note, removes the file. In the web panel the lead timeline shows
+direction, number, duration and an audio player (owner, their manager, admin).
 
 ### Notifications
 Local notifications are the Android app's job. The API supplies what it needs:

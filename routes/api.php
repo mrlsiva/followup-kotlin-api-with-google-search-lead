@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BusinessFinder\BusinessFinderController;
 use App\Http\Controllers\Api\BusinessFinder\BusinessLeadController;
 use App\Http\Controllers\Api\BusinessFinder\BusinessLeadExportController;
+use App\Http\Controllers\Api\CallRecordingController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FollowupController;
 use App\Http\Controllers\Api\LeadController;
@@ -49,6 +50,11 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('followups/{followup}', [FollowupController::class, 'update']);
         Route::post('followups/{followup}/complete', [FollowupController::class, 'complete']);
         Route::delete('followups/{followup}', [FollowupController::class, 'destroy']);
+
+        // Call recording of a note (can also be sent with the note itself)
+        Route::post('followups/{followup}/recording', [CallRecordingController::class, 'store'])->middleware('throttle:30,1');
+        Route::get('followups/{followup}/recording', [CallRecordingController::class, 'show'])->name('api.followups.recording.show');
+        Route::delete('followups/{followup}/recording', [CallRecordingController::class, 'destroy']);
     });
 
     // Business Lead Finder (free manual research → existing CRM leads / follow-ups)

@@ -232,6 +232,42 @@
           }
         },
         {
+          "name": "Complete follow-up with call details + recording (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/followups/{{followup_id}}/complete", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}", "complete"] },
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "call_status", "value": "Interested", "type": "text" },
+              { "key": "note", "value": "Spoke to owner, sending quotation", "type": "text" },
+              { "key": "call_direction", "value": "outgoing", "type": "text" },
+              { "key": "phone_number", "value": "+919876543210", "type": "text" },
+              { "key": "call_started_at", "value": "2026-11-20T14:30:05+05:30", "type": "text" },
+              { "key": "call_ended_at", "value": "2026-11-20T14:33:10+05:30", "type": "text" },
+              { "key": "recording", "type": "file", "src": [] }
+            ] },
+            "description": "Call details are optional. call_duration (seconds) is computed from start/end when omitted. Recording formats: m4a (recommended), mp4, aac, mp3, amr, 3gp, ogg, opus, wav, webm; max 25 MB."
+          }
+        },
+        {
+          "name": "Upload / replace call recording",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/followups/{{followup_id}}/recording", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}", "recording"] },
+            "body": { "mode": "formdata", "formdata": [{ "key": "recording", "type": "file", "src": [] }] },
+            "description": "Only for completed follow-ups (notes); a pending one returns 409."
+          }
+        },
+        {
+          "name": "Play / download call recording",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/followups/{{followup_id}}/recording?download=1", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}", "recording"], "query": [{ "key": "download", "value": "1" }] } }
+        },
+        {
+          "name": "Delete call recording",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/followups/{{followup_id}}/recording", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}", "recording"] } }
+        },
+        {
           "name": "Delete note / cancel follow-up",
           "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/followups/{{followup_id}}", "host": ["{{base_url}}"], "path": ["followups", "{{followup_id}}"] } }
         }

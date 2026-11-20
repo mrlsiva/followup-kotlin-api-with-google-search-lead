@@ -21,6 +21,17 @@ use OpenApi\Attributes as OA;
     new OA\Property(property: 'next_followup_date', type: 'string', format: 'date', nullable: true, example: '2026-11-14', description: 'Explicit next follow-up (overrides schedule_next)'),
     new OA\Property(property: 'next_followup_time', type: 'string', nullable: true, example: '11:00'),
     new OA\Property(property: 'next_followup_at', type: 'string', format: 'date-time', nullable: true),
+    new OA\Property(property: 'call_direction', type: 'string', nullable: true, enum: ['outgoing', 'incoming']),
+    new OA\Property(property: 'phone_number', type: 'string', nullable: true, example: '+919876543210', description: 'Number dialled / received'),
+    new OA\Property(property: 'call_started_at', type: 'string', format: 'date-time', nullable: true, example: '2026-11-10T11:15:05+05:30', description: 'From the phone call log. Used as the note time when date/time are not sent'),
+    new OA\Property(property: 'call_ended_at', type: 'string', format: 'date-time', nullable: true, example: '2026-11-10T11:18:10+05:30'),
+    new OA\Property(property: 'call_duration', type: 'integer', nullable: true, example: 185, description: 'Seconds talked (computed from start/end when omitted)'),
+])]
+#[OA\Schema(schema: 'FollowupNoteMultipart', description: 'Same fields as FollowupNoteInput plus the recording file', allOf: [
+    new OA\Schema(ref: '#/components/schemas/FollowupNoteInput'),
+    new OA\Schema(properties: [
+        new OA\Property(property: 'recording', type: 'string', format: 'binary', description: 'Call recording: m4a (recommended), mp4, aac, mp3, amr, 3gp, ogg, opus, wav, webm. Max CALL_RECORDING_MAX_MB (25 MB)'),
+    ]),
 ])]
 class LeadFollowupController extends Controller
 {
@@ -50,7 +61,10 @@ class LeadFollowupController extends Controller
     #[OA\Post(
         path: '/api/leads/{lead}/followups', summary: 'Add a follow-up note (date, time, note, status after call)', tags: ['Lead follow-ups'], security: [['sanctum' => []]],
         parameters: [new OA\Parameter(name: 'lead', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(ref: '#/components/schemas/FollowupNoteInput')),
+        requestBody: new OA\RequestBody(required: true, content: [
+            new OA\JsonContent(ref: '#/components/schemas/FollowupNoteInput'),
+            new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: '#/components/schemas/FollowupNoteMultipart')),
+        ]),
         responses: [
             new OA\Response(response: 201, description: 'Note added', content: new OA\JsonContent(properties: [
                 new OA\Property(property: 'data', ref: '#/components/schemas/Followup'),

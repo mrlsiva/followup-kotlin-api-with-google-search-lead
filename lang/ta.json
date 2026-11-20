@@ -467,5 +467,10 @@
     "Assign lead to": "லீட்டை ஒதுக்கு",
     "You cannot assign this lead to that user.": "இந்த லீட்டை அந்தப் பயனருக்கு ஒதுக்க முடியாது.",
     "Not saved to CRM yet. A manager or admin will save it to the CRM and assign it to a salesperson.": "இன்னும் CRM-இல் சேமிக்கப்படவில்லை. மேலாளர் அல்லது நிர்வாகி இதை CRM-இல் சேமித்து ஒரு விற்பனையாளருக்கு ஒதுக்குவார்.",
-    "Save business": "வணிகத்தைச் சேமி"
+    "Save business": "வணிகத்தைச் சேமி",
+    "Outgoing": "வெளிச்செல்லும் அழைப்பு",
+    "Incoming": "உள்வரும் அழைப்பு",
+    "Duration": "நேரம்",
+    "Call recording": "அழைப்புப் பதிவு",
+    "Download": "பதிவிறக்கு"
 }

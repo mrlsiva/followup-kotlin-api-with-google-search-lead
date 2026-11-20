@@ -10,6 +10,7 @@ use App\Services\FollowupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class FollowupController extends WebController
 {
@@ -67,6 +68,14 @@ class FollowupController extends WebController
         $this->followups->syncNextFollowup($followup->lead, $request->nextFollowupAt());
 
         return back()->with('success', __('Follow-up rescheduled.'));
+    }
+
+    /** Play (or ?download=1) the call recording uploaded by the app. */
+    public function recording(Request $request, Followup $followup): Response
+    {
+        abort_unless($followup->hasRecording(), 404);
+
+        return $followup->recordingResponse($request->boolean('download'));
     }
 
     public function destroy(Followup $followup): RedirectResponse

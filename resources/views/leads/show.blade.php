@@ -145,7 +145,20 @@
                                             </form>
                                         @endif
                                     </div>
+                                    @if ($f->call_direction || $f->call_duration !== null || $f->phone_number)
+                                        <div class="small text-muted mt-1">
+                                            @if ($f->call_direction)<i class="bi {{ $f->call_direction === \App\Enums\CallDirection::Incoming ? 'bi-telephone-inbound' : 'bi-telephone-outbound' }} me-1"></i>{{ __(ucfirst($f->call_direction->value)) }}@endif
+                                            @if ($f->phone_number) · {{ $f->phone_number }}@endif
+                                            @if ($f->call_duration !== null) · {{ __('Duration') }} {{ gmdate($f->call_duration >= 3600 ? 'G:i:s' : 'i:s', $f->call_duration) }}@endif
+                                        </div>
+                                    @endif
                                     @if ($f->note)<div class="text-body-secondary mt-1" style="white-space: pre-line">{{ $f->note }}</div>@endif
+                                    @if ($f->hasRecording())
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                            <audio controls preload="none" src="{{ route('followups.recording', $f) }}" style="max-width: 100%; height: 36px" aria-label="{{ __('Call recording') }}"></audio>
+                                            <a href="{{ route('followups.recording', [$f, 'download' => 1]) }}" class="small"><i class="bi bi-download me-1"></i>{{ __('Download') }}</a>
+                                        </div>
+                                    @endif
                                     @if ($f->isPending())<div class="small text-muted">{{ __('Scheduled call') }}</div>@endif
                                 </li>
                             @endforeach

@@ -151,13 +151,10 @@ class FollowupController extends Controller
             ."| Status after call | Next follow-up |\n|---|---|\n| Not Answered / Callback | +1 day |\n| Interested | +1 day (High), +3 (Medium), +5 (Low) |\n| Closed | none |\n\nThe original time of day is kept and Sundays are skipped.",
         tags: ['Follow-ups'], security: [['sanctum' => []]],
         parameters: [new OA\Parameter(name: 'followup', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
-        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['call_status'], properties: [
-            new OA\Property(property: 'call_status', type: 'string', enum: ['Interested', 'Not Answered', 'Callback', 'Closed']),
-            new OA\Property(property: 'note', type: 'string', example: 'Spoke to Ravi, sending quotation'),
-            new OA\Property(property: 'schedule_next', type: 'boolean', default: true),
-            new OA\Property(property: 'next_followup_date', type: 'string', format: 'date', nullable: true, example: '2026-11-14'),
-            new OA\Property(property: 'next_followup_time', type: 'string', nullable: true, example: '11:00'),
-        ])),
+        requestBody: new OA\RequestBody(required: true, description: 'Same fields as FollowupNoteInput (call details included). Send multipart/form-data to include the `recording` file.', content: [
+            new OA\JsonContent(ref: '#/components/schemas/FollowupNoteInput'),
+            new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(ref: '#/components/schemas/FollowupNoteMultipart')),
+        ]),
         responses: [
             new OA\Response(response: 200, description: 'Completed', content: new OA\JsonContent(properties: [
                 new OA\Property(property: 'data', ref: '#/components/schemas/Followup'),

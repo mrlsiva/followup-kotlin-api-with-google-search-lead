@@ -8,6 +8,7 @@ use App\Enums\LeadPriority;
 use App\Enums\LeadStatus;
 use App\Models\Followup;
 use App\Models\Lead;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -61,7 +62,7 @@ class FollowupService
     /**
      * Add a history note to a lead (a completed follow-up at $at) and optionally reschedule.
      *
-     * @param  array{at: Carbon, note: ?string, call_status: CallStatus, next_at: ?Carbon, schedule_next: ?bool}  $data
+     * @param  array{at: Carbon, note: ?string, call_status: CallStatus, next_at: ?Carbon, schedule_next: ?bool, call?: array, recording?: ?UploadedFile}  $data
      */
     public function addNote(Lead $lead, array $data): Followup
     {
@@ -73,12 +74,16 @@ class FollowupService
                 'status' => FollowupStatus::Completed,
                 'call_status' => $data['call_status'],
                 'note' => $data['note'] ?? null,
+                ...($data['call'] ?? []),
             ]);
 
             $this->applyCallOutcome($lead, $data['call_status']);
             $next = $this->resolveNext($lead, $data, $lead->next_followup_at);
             if ($next !== false) {
                 $this->syncNextFollowup($lead, $next);
+            }
+            if (! empty($data['recording'])) {
+                $note->attachRecording($data['recording']);
             }
 
             return $note;
@@ -88,7 +93,7 @@ class FollowupService
     /**
      * Mark a pending follow-up done and schedule the next one.
      *
-     * @param  array{note: ?string, call_status: CallStatus, next_at: ?Carbon, schedule_next: ?bool, completed_at?: ?Carbon}  $data
+     * @param  array{note: ?string, call_status: CallStatus, next_at: ?Carbon, schedule_next: ?bool, completed_at?: ?Carbon, call?: array, recording?: ?UploadedFile}  $data
      */
     public function complete(Followup $followup, array $data): Followup
     {
@@ -98,6 +103,7 @@ class FollowupService
                 'completed_at' => $data['completed_at'] ?? now(),
                 'call_status' => $data['call_status'],
                 'note' => $data['note'] ?? null,
+                ...($data['call'] ?? []),
             ]);
 
             $lead = $followup->lead;
@@ -107,6 +113,9 @@ class FollowupService
             $data['schedule_next'] ??= true;
             $next = $this->resolveNext($lead, $data, $followup->scheduled_at);
             $this->syncNextFollowup($lead, $next === false ? null : $next);
+            if (! empty($data['recording'])) {
+                $followup->attachRecording($data['recording']);
+            }
 
             return $followup->refresh();
         });

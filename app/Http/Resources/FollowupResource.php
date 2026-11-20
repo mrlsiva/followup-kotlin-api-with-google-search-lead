@@ -28,6 +28,18 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'completed_at', type: 'string', format: 'date-time', nullable: true),
         new OA\Property(property: 'call_status', type: 'string', nullable: true, enum: ['Interested', 'Not Answered', 'Callback', 'Closed']),
         new OA\Property(property: 'note', type: 'string', nullable: true),
+        new OA\Property(property: 'call_direction', type: 'string', nullable: true, enum: ['outgoing', 'incoming']),
+        new OA\Property(property: 'phone_number', type: 'string', nullable: true, example: '+919876543210'),
+        new OA\Property(property: 'call_started_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'call_ended_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'call_duration', type: 'integer', nullable: true, example: 185, description: 'Seconds talked'),
+        new OA\Property(property: 'has_recording', type: 'boolean'),
+        new OA\Property(property: 'recording', type: 'object', nullable: true, description: 'Call recording; fetch `url` with the Bearer token', properties: [
+            new OA\Property(property: 'url', type: 'string', example: 'http://localhost/followup-api-kotlin/public/api/followups/40/recording'),
+            new OA\Property(property: 'format', type: 'string', example: 'm4a'),
+            new OA\Property(property: 'mime', type: 'string', example: 'audio/mp4'),
+            new OA\Property(property: 'size', type: 'integer', example: 482113, description: 'Bytes'),
+        ]),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
     ]
 )]
@@ -56,6 +68,18 @@ class FollowupResource extends JsonResource
             'completed_at' => $this->completed_at?->toIso8601String(),
             'call_status' => $this->call_status?->value,
             'note' => $this->note,
+            'call_direction' => $this->call_direction?->value,
+            'phone_number' => $this->phone_number,
+            'call_started_at' => $this->call_started_at?->toIso8601String(),
+            'call_ended_at' => $this->call_ended_at?->toIso8601String(),
+            'call_duration' => $this->call_duration,
+            'has_recording' => $this->hasRecording(),
+            'recording' => $this->hasRecording() ? [
+                'url' => route('api.followups.recording.show', $this->id),
+                'format' => $this->recordingFormat(),
+                'mime' => $this->recording_mime,
+                'size' => $this->recording_size,
+            ] : null,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
