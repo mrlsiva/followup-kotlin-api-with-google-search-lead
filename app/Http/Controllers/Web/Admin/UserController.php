@@ -109,8 +109,8 @@ class UserController extends WebController
             'name' => $data['name'],
             'email' => $data['email'],
             'role' => $data['role'],
-            // Only salespeople belong to a manager's team
-            'manager_id' => $data['role'] === UserRole::Sales->value ? ($data['manager_id'] ?? null) : null,
+            // Salespeople and researchers belong to a manager's team
+            'manager_id' => in_array($data['role'], [UserRole::Sales->value, UserRole::Researcher->value], true) ? ($data['manager_id'] ?? null) : null,
             'locale' => $data['locale'],
             'is_active' => (bool) ($data['is_active'] ?? false),
         ]);

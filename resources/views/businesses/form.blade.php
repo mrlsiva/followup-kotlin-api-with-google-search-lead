@@ -1,13 +1,13 @@
 @extends('layouts.app')
 @php $editing = $business->exists; $b = $business; @endphp
-@section('title', $editing ? __('Edit business') : __('Add Business to CRM'))
+@section('title', $editing ? __('Edit business') : (auth()->user()->canUseCrm() ? __('Add Business to CRM') : __('Add business')))
 @push('scripts-before')
     <script>window.CRM_DISTRICTS = @json(config('business_finder.districts'));</script>
 @endpush
 @section('content')
     <div class="d-flex align-items-center gap-2 mb-3">
         <a href="{{ $editing ? route('businesses.show', $b) : route('businesses.index') }}" class="btn btn-light btn-sm"><i class="bi bi-arrow-left"></i></a>
-        <h1 class="page-title">{{ $editing ? __('Edit business') : __('Add Business to CRM') }}</h1>
+        <h1 class="page-title">{{ $editing ? __('Edit business') : (auth()->user()->canUseCrm() ? __('Add Business to CRM') : __('Add business')) }}</h1>
     </div>
     @if ($search)
         <div class="alert alert-light border py-2 small"><i class="bi bi-search me-1"></i>{{ __('From search') }}: <strong>{{ $search->query }}</strong></div>
@@ -131,7 +131,7 @@
                     </div>
                 </div>
 
-                @unless ($editing)
+                @if (! $editing && auth()->user()->canUseCrm())
                     <div class="card mb-4 border-success">
                         <div class="card-header"><i class="bi bi-person-plus text-teal me-1"></i>{{ __('Save to CRM') }}</div>
                         <div class="card-body">
@@ -157,10 +157,10 @@
                             </div>
                         </div>
                     </div>
-                @endunless
+                @endif
 
                 <div class="d-grid gap-2">
-                    <button class="btn btn-primary btn-lg"><i class="bi bi-check2 me-1"></i>{{ $editing ? __('Save changes') : __('Add Business to CRM') }}</button>
+                    <button class="btn btn-primary btn-lg"><i class="bi bi-check2 me-1"></i>{{ $editing ? __('Save changes') : (auth()->user()->canUseCrm() ? __('Add Business to CRM') : __('Save business')) }}</button>
                     <a href="{{ $editing ? route('businesses.show', $b) : route('businesses.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 </div>
             </div>

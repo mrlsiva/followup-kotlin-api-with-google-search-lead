@@ -27,14 +27,16 @@
         <button type="button" class="btn-close btn-close-white ms-auto d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="{{ __('Close') }}"></button>
     </div>
     <nav class="sl-nav nav flex-column">
-        <a class="nav-link {{ $nav('dashboard') }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i>{{ __('Dashboard') }}</a>
+        @if ($me->canUseCrm())
+            <a class="nav-link {{ $nav('dashboard') }}" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i>{{ __('Dashboard') }}</a>
 
-        <div class="sl-section">{{ __('CRM') }}</div>
-        <a class="nav-link {{ $nav('leads.*') }}" href="{{ route('leads.index') }}"><i class="bi bi-people"></i>{{ __('Leads') }}</a>
-        <a class="nav-link {{ $nav('followups.*') }}" href="{{ route('followups.index') }}"><i class="bi bi-telephone-outbound"></i>{{ __('Follow-ups') }}
-            @if ($dueCount ?? 0)<span class="badge rounded-pill text-bg-danger">{{ $dueCount }}</span>@endif
-        </a>
-        <a class="nav-link {{ $nav('transfer.*') }}" href="{{ route('transfer.index') }}"><i class="bi bi-arrow-down-up"></i>{{ __('Import / Export') }}</a>
+            <div class="sl-section">{{ __('CRM') }}</div>
+            <a class="nav-link {{ $nav('leads.*') }}" href="{{ route('leads.index') }}"><i class="bi bi-people"></i>{{ __('Leads') }}</a>
+            <a class="nav-link {{ $nav('followups.*') }}" href="{{ route('followups.index') }}"><i class="bi bi-telephone-outbound"></i>{{ __('Follow-ups') }}
+                @if ($dueCount ?? 0)<span class="badge rounded-pill text-bg-danger">{{ $dueCount }}</span>@endif
+            </a>
+            <a class="nav-link {{ $nav('transfer.*') }}" href="{{ route('transfer.index') }}"><i class="bi bi-arrow-down-up"></i>{{ __('Import / Export') }}</a>
+        @endif
 
         <div class="sl-section">{{ __('Business Finder') }}</div>
         <a class="nav-link {{ $nav('finder.dashboard') }}" href="{{ route('finder.dashboard') }}"><i class="bi bi-compass"></i>{{ __('Finder dashboard') }}</a>

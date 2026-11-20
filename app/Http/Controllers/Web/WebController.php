@@ -11,10 +11,10 @@ use Illuminate\Http\Request;
 /** Shared helpers for the web panel. */
 abstract class WebController extends Controller
 {
-    /** Only the owner may change a record (admins/managers can view and reassign). */
-    protected function ensureOwner(Model $record): void
+    /** The owner, their manager or an admin may change a record. */
+    protected function ensureCanEdit(Model $record): void
     {
-        abort_unless((int) $record->user_id === (int) auth()->id(), 403, __('Only the owner can change this record.'));
+        abort_unless(auth()->user()?->canEdit((int) $record->user_id), 403, __('You cannot change this record.'));
     }
 
     /**

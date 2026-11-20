@@ -34,19 +34,20 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // CRM leads
-    Route::get('import-export', [TransferController::class, 'index'])->name('transfer.index');
-    Route::get('leads/export', [TransferController::class, 'export'])->name('leads.export');
-    Route::post('leads/import', [TransferController::class, 'import'])->name('leads.import');
-    Route::resource('leads', LeadController::class);
-    Route::post('leads/{lead}/notes', [LeadController::class, 'addNote'])->name('leads.notes.store');
-    Route::post('leads/{lead}/reassign', [LeadController::class, 'reassign'])->name('leads.reassign');
+    // CRM leads and follow-ups (not for Business Finder researchers)
+    Route::middleware('role:crm')->group(function () {
+        Route::get('import-export', [TransferController::class, 'index'])->name('transfer.index');
+        Route::get('leads/export', [TransferController::class, 'export'])->name('leads.export');
+        Route::post('leads/import', [TransferController::class, 'import'])->name('leads.import');
+        Route::resource('leads', LeadController::class);
+        Route::post('leads/{lead}/notes', [LeadController::class, 'addNote'])->name('leads.notes.store');
+        Route::post('leads/{lead}/reassign', [LeadController::class, 'reassign'])->name('leads.reassign');
 
-    // Follow-ups
-    Route::get('followups', [FollowupController::class, 'index'])->name('followups.index');
-    Route::post('followups/{followup}/complete', [FollowupController::class, 'complete'])->name('followups.complete');
-    Route::put('followups/{followup}', [FollowupController::class, 'reschedule'])->name('followups.reschedule');
-    Route::delete('followups/{followup}', [FollowupController::class, 'destroy'])->name('followups.destroy');
+        Route::get('followups', [FollowupController::class, 'index'])->name('followups.index');
+        Route::post('followups/{followup}/complete', [FollowupController::class, 'complete'])->name('followups.complete');
+        Route::put('followups/{followup}', [FollowupController::class, 'reschedule'])->name('followups.reschedule');
+        Route::delete('followups/{followup}', [FollowupController::class, 'destroy'])->name('followups.destroy');
+    });
 
     // Business Lead Finder
     Route::prefix('business-finder')->name('finder.')->group(function () {

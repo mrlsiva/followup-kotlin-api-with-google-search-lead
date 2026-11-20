@@ -151,18 +151,30 @@ class WebPanelTest extends TestCase
         $this->get(route('admin.users.index'))->assertForbidden();
     }
 
-    public function test_manager_sees_team_read_only_and_can_reassign_within_team(): void
+    public function test_manager_edits_team_records_and_can_reassign_within_team(): void
     {
         $teamLead = $this->leadFor($this->sales);
         $outside = $this->leadFor($this->other);
         $this->actingAs($this->manager);
 
         $this->get(route('leads.index'))->assertSee($teamLead->name)->assertDontSee($outside->name);
-        $this->get(route('leads.show', $teamLead))->assertOk()->assertSee('read-only');
+        $this->get(route('leads.show', $teamLead))->assertOk()->assertDontSee('read-only')->assertSee(route('leads.edit', $teamLead));
         $this->get(route('leads.show', $outside))->assertNotFound();
-        $this->get(route('leads.edit', $teamLead))->assertForbidden();
-        $this->put(route('leads.update', $teamLead), ['name' => 'Hacked'])->assertForbidden();
-        $this->post(route('followups.complete', $teamLead->followups()->first()), ['call_status' => 'Closed'])->assertForbidden();
+
+        // Edit, call notes and follow-ups on a team member's lead; the lead stays theirs
+        $this->get(route('leads.edit', $teamLead))->assertOk();
+        $this->put(route('leads.update', $teamLead), ['name' => 'Renamed by manager'])->assertRedirect();
+        $this->assertSame('Renamed by manager', $teamLead->refresh()->name);
+        $this->post(route('followups.complete', $teamLead->followups()->pending()->first()), ['call_status' => 'Callback', 'schedule_next' => 1])
+            ->assertRedirect()->assertSessionHas('success');
+        $this->post(route('leads.notes.store', $teamLead), ['call_status' => 'Not Answered'])->assertRedirect();
+        $this->assertSame(2, $teamLead->followups()->completed()->count());
+        $this->assertSame([$this->sales->id], Followup::where('lead_id', $teamLead->id)->distinct()->pluck('user_id')->all());
+
+        // Own leads work as before
+        $this->post(route('leads.store'), ['name' => 'Manager lead', 'mobile' => '9111111111'])->assertRedirect();
+        $this->assertSame($this->manager->id, Lead::where('name', 'Manager lead')->value('user_id'));
+
         $this->get(route('reports.index'))->assertOk()->assertSee($this->sales->name)->assertDontSee($this->other->name);
         $this->get(route('admin.users.index'))->assertForbidden();
 
@@ -173,14 +185,28 @@ class WebPanelTest extends TestCase
         $this->assertSame($this->manager->id, Followup::where('lead_id', $teamLead->id)->first()->user_id);
     }
 
-    public function test_admin_sees_everything_and_reassigns_with_business_record(): void
+    public function test_sales_cannot_edit_records_outside_their_own(): void
+    {
+        $teammate = $this->makeUser('sales', $this->manager->id);
+        $theirs = $this->leadFor($teammate);
+        $this->actingAs($this->sales);
+
+        $this->get(route('leads.edit', $theirs))->assertNotFound();
+        $this->put(route('leads.update', $theirs), ['name' => 'Hacked'])->assertNotFound();
+    }
+
+    public function test_admin_edits_everything_and_reassigns_with_business_record(): void
     {
         $business = app(BusinessLeadService::class)->create($this->other, ['business_name' => 'Green School', 'category' => 'Schools', 'phone' => '9000000077']);
         $this->actingAs($this->admin);
 
         $this->get(route('businesses.index'))->assertSee('Green School');
         $this->get(route('businesses.show', $business))->assertOk();
-        $this->get(route('businesses.edit', $business))->assertForbidden();
+        $this->get(route('businesses.edit', $business))->assertOk();
+        $this->post(route('businesses.verify-contact', $business), ['verification_status' => 'Verified'])->assertRedirect();
+        $this->assertSame('Verified', $business->refresh()->contact_status->value);
+        $this->post(route('leads.notes.store', $business->lead), ['call_status' => 'Interested'])->assertRedirect();
+        $this->assertSame($this->other->id, $business->lead->followups()->completed()->first()->user_id);
 
         $this->post(route('leads.reassign', $business->lead), ['user_id' => $this->sales->id])->assertRedirect();
         $this->assertSame($this->sales->id, $business->refresh()->user_id);
@@ -189,6 +215,89 @@ class WebPanelTest extends TestCase
         // The new owner can now work on it through the API too
         Sanctum::actingAs($this->sales);
         $this->getJson("/api/business-finder/leads/{$business->id}")->assertOk();
+    }
+
+    // ---------------- Researcher (Business Finder only) ----------------
+
+    public function test_researcher_only_uses_business_finder(): void
+    {
+        $researcher = $this->makeUser('researcher', $this->manager->id);
+        $this->actingAs($researcher);
+
+        $this->get('/')->assertRedirect(route('finder.dashboard'));
+        $this->get(route('finder.dashboard'))->assertOk()->assertDontSee(route('leads.index'));
+        foreach ([route('leads.index'), route('leads.create'), route('followups.index'), route('transfer.index'), route('reports.index')] as $url) {
+            $this->get($url)->assertForbidden();
+        }
+        $this->post(route('leads.store'), ['name' => 'X', 'mobile' => '9222222222'])->assertForbidden();
+        $this->get(route('businesses.create'))->assertOk()->assertDontSee('Create a CRM lead now');
+
+        // Saving a business never creates a CRM lead, even if asked to
+        $this->post(route('businesses.store'), [
+            'business_name' => 'Sun Clinic', 'category' => 'Hospitals', 'phone' => '9333333333',
+            'save_to_crm' => '1', 'next_followup_date' => '2026-11-11', 'next_followup_time' => '10:00',
+        ])->assertRedirect();
+        $business = BusinessLead::where('business_name', 'Sun Clinic')->firstOrFail();
+        $this->assertSame($researcher->id, $business->user_id);
+        $this->assertNull($business->lead_id);
+        $this->assertSame(0, Lead::count());
+
+        $this->get(route('businesses.show', $business))->assertOk()->assertDontSee(route('businesses.convert', $business));
+        $this->post(route('businesses.convert', $business))->assertForbidden();
+        $this->post(route('businesses.verify-contact', $business), ['verification_status' => 'Verified'])->assertRedirect();
+
+        // API: Business Finder works, CRM endpoints are refused
+        Sanctum::actingAs($researcher);
+        $this->getJson('/api/business-finder/leads')->assertOk()->assertJsonPath('data.0.business_name', 'Sun Clinic');
+        $this->postJson('/api/business-finder/leads', ['business_name' => 'Moon Store', 'category' => 'Hospitals', 'phone' => '9444444444'])
+            ->assertCreated()->assertJsonPath('lead', null);
+        $this->postJson("/api/business-finder/leads/{$business->id}/convert")->assertForbidden();
+        foreach (['/api/dashboard', '/api/leads', '/api/followups', '/api/followups/reminders'] as $url) {
+            $this->getJson($url)->assertForbidden();
+        }
+    }
+
+    public function test_manager_saves_researchers_business_to_crm_for_a_salesperson(): void
+    {
+        $researcher = $this->makeUser('researcher', $this->manager->id);
+        $business = app(BusinessLeadService::class)->create($researcher, ['business_name' => 'Blue Hotel', 'category' => 'Hotels', 'phone' => '9555555555'], ['save_to_crm' => false]);
+        $this->actingAs($this->manager);
+
+        $this->get(route('businesses.index', ['saved' => '0']))->assertSee('Blue Hotel');
+        $this->get(route('businesses.show', $business))->assertOk()
+            ->assertSee(route('businesses.convert', $business))->assertSee('Assign lead to');
+
+        // Cannot assign to someone outside the team or to a researcher
+        $this->post(route('businesses.convert', $business), ['assign_to' => $this->other->id])->assertForbidden();
+        $this->post(route('businesses.convert', $business), ['assign_to' => $researcher->id])->assertForbidden();
+
+        $this->post(route('businesses.convert', $business), [
+            'assign_to' => $this->sales->id, 'next_followup_date' => '2026-11-11', 'next_followup_time' => '11:00',
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $business->refresh();
+        $this->assertSame($researcher->id, $business->user_id);        // still credited to the researcher
+        $this->assertSame($this->sales->id, $business->lead->user_id); // the salesperson works the lead
+        $this->assertSame('2026-11-11 11:00', $business->lead->next_followup_at->format('Y-m-d H:i'));
+        $this->assertSame($this->sales->id, $business->lead->followups()->pending()->first()->user_id);
+
+        // Reassigning the lead later leaves the researcher's business record alone
+        $this->post(route('leads.reassign', $business->lead), ['user_id' => $this->manager->id])->assertRedirect();
+        $this->assertSame($researcher->id, $business->refresh()->user_id);
+        $this->assertSame($this->manager->id, $business->lead->user_id);
+    }
+
+    public function test_admin_can_create_a_researcher_with_a_manager(): void
+    {
+        $this->actingAs($this->admin);
+        $this->post(route('admin.users.store'), [
+            'name' => 'Rita', 'email' => 'rita@sling.test', 'password' => 'secret123', 'password_confirmation' => 'secret123',
+            'role' => 'researcher', 'manager_id' => $this->manager->id, 'locale' => 'en', 'is_active' => 1,
+        ])->assertRedirect();
+        $rita = User::where('email', 'rita@sling.test')->firstOrFail();
+        $this->assertTrue($rita->isResearcher());
+        $this->assertSame($this->manager->id, $rita->manager_id);
+        $this->get(route('admin.users.index'))->assertSee('Researcher');
     }
 
     public function test_api_stays_owner_only_for_admins(): void

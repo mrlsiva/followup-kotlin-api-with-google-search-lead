@@ -121,7 +121,8 @@
                         <td><x-badge :value="$b->website_status" /></td>
                         <td class="d-none d-md-table-cell"><x-badge :value="$b->contact_status" /></td>
                         <td class="d-none d-sm-table-cell">
-                            @if ($b->lead)<a href="{{ route('leads.show', $b->lead) }}" class="text-decoration-none"><x-badge :value="$b->lead->status" /></a>
+                            @if ($b->lead && ! auth()->user()->canUseCrm())<x-badge :value="$b->lead->status" />
+                            @elseif ($b->lead)<a href="{{ route('leads.show', $b->lead) }}" class="text-decoration-none"><x-badge :value="$b->lead->status" /></a>
                             @else<span class="badge bg-light text-muted">{{ __('Not saved') }}</span>@endif
                         </td>
                         @if ($users->isNotEmpty())<td class="d-none d-xl-table-cell small">{{ $b->user?->name }}</td>@endif

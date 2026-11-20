@@ -200,6 +200,7 @@ class BusinessLeadController extends Controller
                 new OA\Property(property: 'lead', ref: '#/components/schemas/Lead'),
             ])),
             new OA\Response(response: 401, ref: '#/components/responses/Unauthenticated'),
+            new OA\Response(response: 403, description: 'Researchers cannot save businesses to the CRM'),
             new OA\Response(response: 404, ref: '#/components/responses/NotFound'),
             new OA\Response(response: 409, ref: '#/components/responses/DuplicateBusiness'),
             new OA\Response(response: 422, ref: '#/components/responses/ValidationError'),
@@ -207,6 +208,7 @@ class BusinessLeadController extends Controller
     )]
     public function convert(ConvertBusinessLeadRequest $request, BusinessLead $businessLead): JsonResponse
     {
+        abort_unless($request->user()->canUseCrm(), 403, 'Researchers cannot save businesses to the CRM. A manager or admin does this.');
         if ($businessLead->isSavedToCrm()) {
             return response()->json([
                 'message' => 'This business is already saved to the CRM. Schedule calls with PUT /api/leads/{id}.',

@@ -11,7 +11,10 @@ use App\Http\Requests\BusinessFinder\ConvertBusinessLeadRequest;
 use App\Http\Requests\BusinessFinder\VerifyContactRequest;
 use App\Http\Requests\BusinessFinder\VerifyWebsiteRequest;
 use App\Models\AuditLog;
+use App\Enums\UserRole;
 use App\Models\BusinessLead;
+use App\Models\User;
+use Illuminate\Support\Collection;
 use App\Services\BusinessFinder\BusinessLeadExporter;
 use App\Services\BusinessFinder\BusinessLeadQuery;
 use App\Services\BusinessFinder\BusinessLeadService;
@@ -81,22 +84,32 @@ class BusinessController extends WebController
             ->orderByRaw("status = 'pending' DESC")
             ->orderByRaw('COALESCE(completed_at, scheduled_at) DESC')]);
 
+        $user = $request->user();
+        $canEdit = $user->canEdit($businessLead->user_id);
+        $canConvert = $canEdit && $user->canUseCrm();
+
         return view('businesses.show', [
             'b' => $businessLead,
-            'isOwner' => $businessLead->user_id === $request->user()->id,
+            'isOwner' => $businessLead->user_id === $user->id,
+            'canEdit' => $canEdit,
+            'canUseCrm' => $user->canUseCrm(),
+            'canConvert' => $canConvert,
+            // Who the new CRM lead can belong to (people who do CRM work: never researchers)
+            'assignees' => $canConvert ? $this->crmAssignees($user) : collect(),
+            'defaultAssignee' => $businessLead->user?->canUseCrm() ? $businessLead->user_id : $user->id,
         ]);
     }
 
     public function edit(BusinessLead $businessLead): View
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
 
         return view('businesses.form', ['business' => $businessLead, 'search' => null]);
     }
 
     public function update(BusinessLeadRequest $request, BusinessLead $businessLead): RedirectResponse
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
         try {
             $this->service->update($businessLead, $request->businessData());
         } catch (DuplicateBusinessException $e) {
@@ -108,7 +121,7 @@ class BusinessController extends WebController
 
     public function destroy(BusinessLead $businessLead): RedirectResponse
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
         $businessLead->delete();
         AuditLog::record('business_lead.deleted', $businessLead, ['business_name' => $businessLead->business_name]);
 
@@ -117,12 +130,21 @@ class BusinessController extends WebController
 
     public function convert(ConvertBusinessLeadRequest $request, BusinessLead $businessLead): RedirectResponse
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
+        $user = $request->user();
+        abort_unless($user->canUseCrm(), 403);
         if ($businessLead->isSavedToCrm()) {
             return back()->with('error', __('This business is already saved to the CRM.'));
         }
+
+        // Lead owner: the chosen salesperson, else the business owner (if they do CRM work), else the current user.
+        $owner = $request->filled('assign_to')
+            ? $this->crmAssignees($user)->firstWhere('id', $request->integer('assign_to'))
+            : ($businessLead->user?->canUseCrm() ? $businessLead->user : $user);
+        abort_if($owner === null, 403, __('You cannot assign this lead to that user.'));
+
         try {
-            $this->service->convert($businessLead, $request->options());
+            $this->service->convert($businessLead, $request->options(), $owner);
         } catch (DuplicateBusinessException $e) {
             return back()->with('duplicate', [
                 'message' => $e->getMessage(),
@@ -135,9 +157,15 @@ class BusinessController extends WebController
         return back()->with('success', __('Business saved to CRM as a new lead.'));
     }
 
+    /** Active users this user may give a new CRM lead to (themselves and, for managers/admins, their CRM team). */
+    private function crmAssignees(User $user): Collection
+    {
+        return $user->visibleUsers()->active()->where('role', '!=', UserRole::Researcher->value)->get(['id', 'name']);
+    }
+
     public function verifyContact(VerifyContactRequest $request, BusinessLead $businessLead): RedirectResponse
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
         try {
             $this->service->verifyContact($businessLead, $request->validated());
         } catch (DuplicateBusinessException $e) {
@@ -150,7 +178,7 @@ class BusinessController extends WebController
     /** AJAX: check and store the website result. */
     public function verifyWebsite(VerifyWebsiteRequest $request, BusinessLead $businessLead, WebsiteChecker $checker): JsonResponse
     {
-        $this->ensureOwner($businessLead);
+        $this->ensureCanEdit($businessLead);
         $result = $checker->check($request->input('url') ?: $businessLead->website_url);
         if (in_array($result['result'], [WebsiteChecker::INVALID_URL, WebsiteChecker::NOT_ALLOWED], true)) {
             return response()->json(['message' => $result['message'], 'check' => $result], 422);

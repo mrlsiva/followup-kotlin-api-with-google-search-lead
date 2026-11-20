@@ -87,11 +87,19 @@ the Android app keeps using API tokens.
 
 | Role | Sees | Can change |
 |---|---|---|
+| `researcher` | own businesses (Business Finder only) | own businesses; no leads, follow-ups or CRM saving |
 | `sales` | own leads, follow-ups, businesses | own records |
-| `manager` | own + the salespeople assigned to them (`manager_id`) | own records; can reassign team leads |
-| `admin` | everyone + team reports + users | own records; can reassign any lead; manages users |
+| `manager` | own + the salespeople and researchers assigned to them (`manager_id`) | own + team records (edit, call notes, follow-ups, save to CRM); can reassign team leads |
+| `admin` | everyone + team reports + users | everyone's records; can reassign any lead; manages users |
 
-Other people's records are read-only. The API stays owner-only for every role.
+Changes a manager or admin makes to someone else's record stay on that person's record (the lead and its follow-ups keep their owner).
+The API stays owner-only for every role.
+
+**Researchers** search, add and verify businesses, but never create CRM leads (`save_to_crm` is ignored for them). Their
+manager (or an admin) opens the business, picks **Assign lead to** and clicks *Save to CRM*: the lead and its first call go
+to that salesperson, while the business stays credited to the researcher. In the web panel the CRM menus are hidden and
+`/` opens the Finder dashboard. In the API, `/api/business-finder/*` works and the lead, follow-up and dashboard endpoints
+(and `business-finder/leads/{id}/convert`) return 403.
 
 - The oldest existing user becomes **admin** when the roles migration runs. To promote someone else:
   `php artisan crm:make-admin someone@example.com`

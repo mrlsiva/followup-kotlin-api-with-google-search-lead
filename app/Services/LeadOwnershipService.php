@@ -25,7 +25,8 @@ class LeadOwnershipService
             $from = $lead->user_id;
             $lead->forceFill(['user_id' => $to->id])->save();
             Followup::where('lead_id', $lead->id)->update(['user_id' => $to->id]);
-            $lead->businessLead()->update(['user_id' => $to->id, 'business_search_id' => null]);
+            // The Business Finder record moves too, unless someone else (e.g. a researcher) found it.
+            $lead->businessLead()->where('user_id', $from)->update(['user_id' => $to->id, 'business_search_id' => null]);
             AuditLog::record('lead.reassigned', $lead, ['from_user_id' => $from, 'to_user_id' => $to->id]);
 
             return $lead->refresh();

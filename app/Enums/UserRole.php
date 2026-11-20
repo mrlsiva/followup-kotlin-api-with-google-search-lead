@@ -5,9 +5,11 @@ namespace App\Enums;
 use App\Enums\Concerns\HasValues;
 
 /**
- * admin   – sees every user's leads, team reports, manages users
- * manager – own work + read-only view and reports of the salespeople assigned to them
- * sales   – own leads, follow-ups and Business Finder only
+ * admin      – sees and edits every user's records, team reports, manages users
+ * manager    – own work + sees and edits the records of the people assigned to them, team reports
+ * sales      – own leads, follow-ups and Business Finder only
+ * researcher – Business Finder only (search, add, verify businesses); no CRM leads or follow-ups.
+ *              A manager/admin saves their businesses to the CRM and assigns the lead to a salesperson.
  */
 enum UserRole: string
 {
@@ -16,6 +18,7 @@ enum UserRole: string
     case Admin = 'admin';
     case Manager = 'manager';
     case Sales = 'sales';
+    case Researcher = 'researcher';
 
     public function label(): string
     {
@@ -23,6 +26,7 @@ enum UserRole: string
             self::Admin => 'Admin',
             self::Manager => 'Manager',
             self::Sales => 'Sales',
+            self::Researcher => 'Researcher',
         };
     }
 }

@@ -84,6 +84,7 @@ class LeadController extends WebController
         return view('leads.show', [
             'lead' => $lead,
             'isOwner' => $lead->user_id === $user->id,
+            'canEdit' => $user->canEdit($lead->user_id),
             'canReassign' => $canReassign,
             'assignees' => $canReassign ? $user->visibleUsers()->active()->get(['id', 'name']) : collect(),
         ]);
@@ -91,14 +92,14 @@ class LeadController extends WebController
 
     public function edit(Lead $lead): View
     {
-        $this->ensureOwner($lead);
+        $this->ensureCanEdit($lead);
 
         return view('leads.form', ['lead' => $lead]);
     }
 
     public function update(LeadRequest $request, Lead $lead): RedirectResponse
     {
-        $this->ensureOwner($lead);
+        $this->ensureCanEdit($lead);
         DB::transaction(function () use ($request, $lead) {
             $lead->update($request->leadData());
             if ($request->hasNextFollowupInput()) {
@@ -112,7 +113,7 @@ class LeadController extends WebController
 
     public function destroy(Lead $lead): RedirectResponse
     {
-        $this->ensureOwner($lead);
+        $this->ensureCanEdit($lead);
         DB::transaction(function () use ($lead) {
             $lead->followups()->pending()->delete();
             $lead->forceFill(['next_followup_at' => null])->save();
@@ -126,7 +127,7 @@ class LeadController extends WebController
     /** Add a call note (and optionally schedule the next follow-up). */
     public function addNote(FollowupNoteRequest $request, Lead $lead): RedirectResponse
     {
-        $this->ensureOwner($lead);
+        $this->ensureCanEdit($lead);
         $this->followups->addNote($lead, $request->serviceData());
 
         return redirect()->route('leads.show', $lead)->with('success', __('Note added.'));

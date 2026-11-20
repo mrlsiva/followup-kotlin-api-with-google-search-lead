@@ -19,6 +19,7 @@ class ConvertBusinessLeadRequest extends FormRequest
             'on_duplicate' => ['nullable', Rule::in(['reject', 'link'])],
             'priority' => ['nullable', Rule::enum(LeadPriority::class)],
             'lead_status' => ['nullable', Rule::enum(LeadStatus::class)],
+            'assign_to' => ['nullable', 'integer'],   // web panel: salesperson who gets the lead (checked in the controller)
             ...$this->nextFollowupRules(),
         ];
     }

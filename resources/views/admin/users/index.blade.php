@@ -50,8 +50,9 @@
     </div>
     <div class="mt-3">{{ $users->links() }}</div>
     <div class="card card-body mt-3 small text-muted">
-        <div><x-badge value="admin" /> {{ __('Sees all users\' leads, team reports and manages users.') }}</div>
-        <div class="mt-1"><x-badge value="manager" /> {{ __('Sees the leads and reports of the salespeople assigned to them (read-only, can reassign leads).') }}</div>
+        <div><x-badge value="admin" /> {{ __('Sees and edits all users\' leads, follow-ups and businesses, team reports and manages users.') }}</div>
+        <div class="mt-1"><x-badge value="manager" /> {{ __('Own leads, follow-ups and businesses, plus sees and edits those of the people assigned to them; team reports.') }}</div>
         <div class="mt-1"><x-badge value="sales" /> {{ __('Sees only their own leads, follow-ups and businesses.') }}</div>
+        <div class="mt-1"><x-badge value="researcher" /> {{ __('Business Finder only: searches, adds and verifies businesses. No leads or follow-ups; a manager or admin saves their businesses to the CRM.') }}</div>
     </div>
 @endsection

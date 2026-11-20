@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Web;
 use App\Enums\LeadStatus;
 use App\Services\BusinessFinder\BusinessFinderStats;
 use App\Services\TeamReportService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends WebController
 {
-    public function __invoke(Request $request, BusinessFinderStats $finder, TeamReportService $reports): View
+    public function __invoke(Request $request, BusinessFinderStats $finder, TeamReportService $reports): View|RedirectResponse
     {
         $user = $request->user();
+        if (! $user->canUseCrm()) {
+            return redirect()->route('finder.dashboard');   // researchers work in Business Finder only
+        }
         $followups = fn () => $user->followups()->activeLead();
         $byStatus = $user->leads()->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
 

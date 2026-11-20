@@ -1482,6 +1482,9 @@
                     "401": {
                         "$ref": "#/components/responses/Unauthenticated"
                     },
+                    "403": {
+                        "description": "Researchers cannot save businesses to the CRM"
+                    },
                     "404": {
                         "$ref": "#/components/responses/NotFound"
                     },

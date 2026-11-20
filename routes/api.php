@@ -30,23 +30,26 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
-    Route::get('dashboard', DashboardController::class);
+    // CRM leads and follow-ups: researchers get 403 (they only use /business-finder/*)
+    Route::middleware('role:crm')->group(function () {
+        Route::get('dashboard', DashboardController::class);
 
-    // Import / export (declared before the {lead} routes)
-    Route::get('leads/export', [LeadTransferController::class, 'export']);
-    Route::post('leads/import', [LeadTransferController::class, 'import']);
+        // Import / export (declared before the {lead} routes)
+        Route::get('leads/export', [LeadTransferController::class, 'export']);
+        Route::post('leads/import', [LeadTransferController::class, 'import']);
 
-    Route::apiResource('leads', LeadController::class)->names('api.leads');
-    Route::get('leads/{lead}/followups', [LeadFollowupController::class, 'index']);
-    Route::post('leads/{lead}/followups', [LeadFollowupController::class, 'store']);
+        Route::apiResource('leads', LeadController::class)->names('api.leads');
+        Route::get('leads/{lead}/followups', [LeadFollowupController::class, 'index']);
+        Route::post('leads/{lead}/followups', [LeadFollowupController::class, 'store']);
 
-    Route::get('followups/reminders', [FollowupController::class, 'reminders']);
-    Route::get('followups/daily-summary', [FollowupController::class, 'dailySummary']);
-    Route::get('followups', [FollowupController::class, 'index']);
-    Route::get('followups/{followup}', [FollowupController::class, 'show']);
-    Route::put('followups/{followup}', [FollowupController::class, 'update']);
-    Route::post('followups/{followup}/complete', [FollowupController::class, 'complete']);
-    Route::delete('followups/{followup}', [FollowupController::class, 'destroy']);
+        Route::get('followups/reminders', [FollowupController::class, 'reminders']);
+        Route::get('followups/daily-summary', [FollowupController::class, 'dailySummary']);
+        Route::get('followups', [FollowupController::class, 'index']);
+        Route::get('followups/{followup}', [FollowupController::class, 'show']);
+        Route::put('followups/{followup}', [FollowupController::class, 'update']);
+        Route::post('followups/{followup}/complete', [FollowupController::class, 'complete']);
+        Route::delete('followups/{followup}', [FollowupController::class, 'destroy']);
+    });
 
     // Business Lead Finder (free manual research → existing CRM leads / follow-ups)
     Route::prefix('business-finder')->middleware('throttle:business-finder')->group(function () {

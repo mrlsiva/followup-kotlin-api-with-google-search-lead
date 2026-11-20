@@ -105,7 +105,8 @@ class BusinessLeadRequest extends FormRequest
     public function crmOptions(): array
     {
         return [
-            'save_to_crm' => $this->has('save_to_crm') ? $this->boolean('save_to_crm') : true,
+            // Researchers never create CRM leads; a manager/admin saves their businesses to the CRM later.
+            'save_to_crm' => $this->user()?->canUseCrm() && ($this->has('save_to_crm') ? $this->boolean('save_to_crm') : true),
             'on_duplicate' => $this->input('on_duplicate', 'reject'),
             'priority' => $this->input('priority'),
             'status' => $this->input('lead_status'),

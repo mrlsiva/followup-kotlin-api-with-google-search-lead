@@ -13,7 +13,7 @@
             <x-badge :value="$lead->status" /><x-badge :value="$lead->priority" />
             @if ($lead->do_not_contact)<span class="badge text-bg-dark">{{ __('Do not contact') }}</span>@endif
         </div>
-        @if ($isOwner)
+        @if ($canEdit)
             <div class="ms-auto d-flex gap-2">
                 <a href="{{ route('leads.edit', $lead) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>{{ __('Edit') }}</a>
                 <form method="POST" action="{{ route('leads.destroy', $lead) }}" data-confirm="{{ __('Delete this lead and its pending follow-up?') }}">
@@ -25,7 +25,11 @@
     </div>
 
     @unless ($isOwner)
-        <div class="alert alert-info py-2"><i class="bi bi-eye me-1"></i>{{ __('You are viewing :name\'s lead (read-only).', ['name' => $lead->user?->name]) }}</div>
+        @if ($canEdit)
+            <div class="alert alert-info py-2"><i class="bi bi-person-check me-1"></i>{{ __('This is :name\'s lead. Your changes and calls are saved on their record.', ['name' => $lead->user?->name]) }}</div>
+        @else
+            <div class="alert alert-info py-2"><i class="bi bi-eye me-1"></i>{{ __('You are viewing :name\'s lead (read-only).', ['name' => $lead->user?->name]) }}</div>
+        @endif
     @endunless
 
     <div class="row g-4">
@@ -82,7 +86,7 @@
         </div>
 
         <div class="col-lg-8">
-            @if ($isOwner && $pending)
+            @if ($canEdit && $pending)
                 <div class="card mb-4 border-{{ $pending->isOverdue() ? 'danger' : 'warning' }}">
                     <div class="card-body d-flex flex-wrap align-items-center gap-3">
                         <span class="stat-icon {{ $pending->isOverdue() ? 'bg-danger-subtle text-danger' : 'bg-orange-subtle text-orange' }} rounded-3 p-2 fs-4"><i class="bi bi-alarm"></i></span>
@@ -95,7 +99,7 @@
                 </div>
             @endif
 
-            @if ($isOwner)
+            @if ($canEdit)
                 <div class="card mb-4">
                     <div class="card-header"><i class="bi bi-journal-plus text-teal me-1"></i>{{ __('Add call note') }}</div>
                     <form method="POST" action="{{ route('leads.notes.store', $lead) }}" class="card-body" novalidate>
@@ -134,7 +138,7 @@
                                     <div class="d-flex flex-wrap align-items-center gap-2">
                                         <span class="fw-semibold">{{ ($f->completed_at ?? $f->scheduled_at)->format('d M Y, h:i A') }}</span>
                                         @if ($f->isPending())<x-badge value="pending" />@else<x-badge :value="$f->call_status" />@endif
-                                        @if ($isOwner && ! $f->isPending())
+                                        @if ($canEdit && ! $f->isPending())
                                             <form method="POST" action="{{ route('followups.destroy', $f) }}" class="ms-auto" data-confirm="{{ __('Delete this note?') }}">
                                                 @csrf @method('DELETE')
                                                 <button class="btn btn-link btn-sm text-muted p-0"><i class="bi bi-x-lg"></i></button>

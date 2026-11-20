@@ -46,7 +46,7 @@ class FollowupController extends WebController
 
     public function complete(FollowupNoteRequest $request, Followup $followup): RedirectResponse
     {
-        $this->ensureOwner($followup);
+        $this->ensureCanEdit($followup);
         if (! $followup->isPending()) {
             return back()->with('error', __('This follow-up is already completed.'));
         }
@@ -60,7 +60,7 @@ class FollowupController extends WebController
 
     public function reschedule(RescheduleFollowupRequest $request, Followup $followup): RedirectResponse
     {
-        $this->ensureOwner($followup);
+        $this->ensureCanEdit($followup);
         if (! $followup->isPending()) {
             return back()->with('error', __('Completed follow-ups cannot be rescheduled.'));
         }
@@ -71,7 +71,7 @@ class FollowupController extends WebController
 
     public function destroy(Followup $followup): RedirectResponse
     {
-        $this->ensureOwner($followup);
+        $this->ensureCanEdit($followup);
         if ($followup->status === FollowupStatus::Pending) {
             $this->followups->syncNextFollowup($followup->lead, null);
         } else {

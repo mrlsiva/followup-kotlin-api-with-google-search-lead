@@ -19,9 +19,10 @@
         // Follow-up / role
         'pending' => 'bg-orange-subtle text-orange', 'completed' => 'bg-teal-subtle text-teal',
         'admin' => 'text-bg-dark', 'manager' => 'bg-teal-subtle text-teal', 'sales' => 'bg-secondary-subtle text-secondary-emphasis',
+        'researcher' => 'bg-orange-subtle text-orange',
         default => 'bg-secondary-subtle text-secondary-emphasis',
     };
-    $label = match ($v) { 'admin' => 'Admin', 'manager' => 'Manager', 'sales' => 'Sales', 'pending' => 'Pending', 'completed' => 'Completed', default => $v };
+    $label = match ($v) { 'admin' => 'Admin', 'manager' => 'Manager', 'sales' => 'Sales', 'researcher' => 'Researcher', 'pending' => 'Pending', 'completed' => 'Completed', default => $v };
 @endphp
 @if ($v !== null && $v !== '')
     <span {{ $attributes->merge(['class' => "badge rounded-pill fw-medium $cls"]) }}>{{ __($label) }}</span>

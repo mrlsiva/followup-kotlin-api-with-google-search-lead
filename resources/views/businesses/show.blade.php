@@ -11,7 +11,7 @@
         <div class="d-flex flex-wrap gap-1 ms-2">
             <x-badge :value="$b->website_status" data-bind="website_status" /><x-badge :value="$b->contact_status" />
         </div>
-        @if ($isOwner)
+        @if ($canEdit)
             <div class="ms-auto d-flex gap-2">
                 <a href="{{ route('businesses.edit', $b) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil me-1"></i>{{ __('Edit') }}</a>
                 <form method="POST" action="{{ route('businesses.destroy', $b) }}" data-confirm="{{ __('Remove this business? The CRM lead (if any) is kept.') }}">
@@ -23,7 +23,11 @@
     </div>
 
     @unless ($isOwner)
-        <div class="alert alert-info py-2"><i class="bi bi-eye me-1"></i>{{ __('Researched by :name (read-only).', ['name' => $b->user?->name]) }}</div>
+        @if ($canEdit)
+            <div class="alert alert-info py-2"><i class="bi bi-person-check me-1"></i>{{ __('Researched by :name. You can edit it and save it to the CRM.', ['name' => $b->user?->name]) }}</div>
+        @else
+            <div class="alert alert-info py-2"><i class="bi bi-eye me-1"></i>{{ __('Researched by :name (read-only).', ['name' => $b->user?->name]) }}</div>
+        @endif
     @endunless
     @if ($b->do_not_contact)
         <div class="alert alert-dark py-2"><i class="bi bi-slash-circle me-1"></i>{{ __('Do not contact: no calls can be scheduled and this business is left out of exports.') }}</div>
@@ -66,7 +70,7 @@
                         <dt>{{ __('HTTP status') }}</dt><dd data-bind="website_http_status">{{ $b->website_http_status ?? '—' }}</dd>
                     </dl>
                     @if ($b->website_check_message)<div class="small text-muted mb-3">{{ $b->website_check_message }}</div>@endif
-                    @if ($isOwner)
+                    @if ($canEdit)
                         <div class="input-group">
                             <input type="text" id="check_url" class="form-control" value="{{ $b->website_url }}" placeholder="example.com">
                             <button type="button" class="btn btn-success" data-website-check data-url="{{ route('businesses.verify-website', $b) }}" data-input="#check_url" data-target="#web-result">
@@ -84,7 +88,7 @@
             {{-- CRM lead --}}
             <div class="card mb-4 {{ $lead ? '' : 'border-warning' }}">
                 <div class="card-header d-flex align-items-center"><span><i class="bi bi-person-badge me-1"></i>{{ __('CRM lead') }}</span>
-                    @if ($lead)<a href="{{ route('leads.show', $lead) }}" class="ms-auto small">{{ __('Open lead') }}</a>@endif</div>
+                    @if ($lead && $canUseCrm)<a href="{{ route('leads.show', $lead) }}" class="ms-auto small">{{ __('Open lead') }}</a>@endif</div>
                 <div class="card-body">
                     @if ($lead)
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -94,7 +98,10 @@
                             <span class="text-muted">{{ __('Next follow-up') }}:</span>
                             <span class="fw-semibold {{ $lead->next_followup_at?->isPast() ? 'text-overdue' : '' }}">{{ $lead->next_followup_at?->format('D, d M Y · h:i A') ?? __('Not scheduled') }}</span>
                         </div>
-                        @if ($isOwner && ! $lead->do_not_contact)
+                        @if ($lead->user_id !== $b->user_id)
+                            <div class="small text-muted mb-3">{{ __('Assigned to') }}: <span class="fw-semibold">{{ $lead->user?->name }}</span></div>
+                        @endif
+                        @if ($canUseCrm && auth()->user()->canEdit($lead->user_id) && ! $lead->do_not_contact)
                             <form method="POST" action="{{ route('leads.update', $lead) }}" class="row g-2 align-items-end" novalidate>
                                 @csrf @method('PUT')
                                 <div class="col-12 small text-muted">{{ __('Schedule a call (uses the CRM follow-up rules)') }}</div>
@@ -115,10 +122,18 @@
                                 @endforeach
                             </ul>
                         @endif
-                    @elseif ($isOwner)
+                    @elseif ($canConvert)
                         <p class="text-muted">{{ __('This business is not in your CRM yet.') }}</p>
                         <form method="POST" action="{{ route('businesses.convert', $b) }}" class="row g-2" novalidate>
                             @csrf
+                            @if ($assignees->count() > 1)
+                                <div class="col-12">
+                                    <label class="form-label small" for="assign_to">{{ __('Assign lead to') }}</label>
+                                    <select name="assign_to" id="assign_to" class="form-select">
+                                        @foreach ($assignees as $a)<option value="{{ $a->id }}" @selected($a->id === $defaultAssignee)>{{ $a->name }}</option>@endforeach
+                                    </select>
+                                </div>
+                            @endif
                             <div class="col-md-4">
                                 <label class="form-label small">{{ __('Priority') }}</label>
                                 <select name="priority" class="form-select">@foreach (\App\Enums\LeadPriority::values() as $p)<option value="{{ $p }}" @selected($p === 'Medium')>{{ __($p) }}</option>@endforeach</select>
@@ -132,6 +147,8 @@
                             </div>
                             <div class="col-12"><button class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>{{ __('Save to CRM') }}</button></div>
                         </form>
+                    @elseif (! $canUseCrm)
+                        <p class="text-muted mb-0">{{ __('Not saved to CRM yet. A manager or admin will save it to the CRM and assign it to a salesperson.') }}</p>
                     @else
                         <p class="text-muted mb-0">{{ __('Not saved to CRM.') }}</p>
                     @endif
@@ -139,7 +156,7 @@
             </div>
 
             {{-- Contact verification --}}
-            @if ($isOwner)
+            @if ($canEdit)
                 <div class="card">
                     <div class="card-header"><i class="bi bi-telephone-inbound me-1"></i>{{ __('Contact verification') }}</div>
                     <form method="POST" action="{{ route('businesses.verify-contact', $b) }}" class="card-body" novalidate>

@@ -85,18 +85,21 @@ class BusinessLeadService
     }
 
     /**
-     * Save an already-researched business to the CRM.
+     * Save an already-researched business to the CRM. The lead belongs to $leadOwner (default: the
+     * business owner), e.g. the salesperson a manager picks for a researcher's business.
      *
      * @throws DuplicateBusinessException
      */
-    public function convert(BusinessLead $business, array $options = []): BusinessLead
+    public function convert(BusinessLead $business, array $options = [], ?User $leadOwner = null): BusinessLead
     {
-        return DB::transaction(function () use ($business, $options) {
-            $dup = $this->findDuplicates($business->user, $business->phone);
+        $leadOwner ??= $business->user;
+
+        return DB::transaction(function () use ($business, $options, $leadOwner) {
+            $dup = $this->findDuplicates($leadOwner, $business->phone);
             if ($dup['lead'] && ($options['on_duplicate'] ?? 'reject') !== 'link') {
                 throw new DuplicateBusinessException($dup['lead']);
             }
-            $this->attachLead($business, $dup['lead'], $options);
+            $this->attachLead($business, $dup['lead'], $options, $leadOwner);
 
             return $business->refresh()->load('lead');
         });
@@ -196,13 +199,13 @@ class BusinessLeadService
         ];
     }
 
-    private function attachLead(BusinessLead $business, ?Lead $existing, array $options): void
+    private function attachLead(BusinessLead $business, ?Lead $existing, array $options, ?User $leadOwner = null): void
     {
         if ($existing) {
             $lead = $existing;
             AuditLog::record('business_lead.linked_to_lead', $business, ['lead_id' => $lead->id]);
         } else {
-            $lead = $business->user->leads()->create($this->leadAttributes($business, $options));
+            $lead = ($leadOwner ?? $business->user)->leads()->create($this->leadAttributes($business, $options));
             AuditLog::record('business_lead.saved_to_crm', $business, ['lead_id' => $lead->id]);
         }
         $business->forceFill(['lead_id' => $lead->id])->save();

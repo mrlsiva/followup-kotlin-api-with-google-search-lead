@@ -29,7 +29,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label" for="manager_id">{{ __('Manager (for sales)') }}</label>
+                    <label class="form-label" for="manager_id">{{ __('Manager (for sales / researchers)') }}</label>
                     <select name="manager_id" id="manager_id" class="form-select @error('manager_id') is-invalid @enderror">
                         <option value="">{{ __('No manager') }}</option>
                         @foreach ($managers as $m)<option value="{{ $m->id }}" @selected((int) old('manager_id', $managed->manager_id) === $m->id)>{{ $m->name }}</option>@endforeach

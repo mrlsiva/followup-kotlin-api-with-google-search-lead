@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * role:admin  – administrators only
  * role:team   – administrators and managers (team views / reports)
+ * role:crm    – CRM leads and follow-ups (everyone except researchers)
  */
 class EnsureRole
 {
@@ -18,6 +19,7 @@ class EnsureRole
         $allowed = match ($ability) {
             'admin' => $user?->isAdmin(),
             'team' => $user?->canViewTeam(),
+            'crm' => $user?->canUseCrm(),
             default => false,
         };
         abort_unless($allowed, 403);

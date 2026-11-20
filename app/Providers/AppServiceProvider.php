@@ -21,8 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Route model binding scoped to the authenticated user: records outside the user's reach are a 404.
-        // API (mobile app): own records only. Web panel: own, team (managers) or all (admins) may be VIEWED;
-        // web controllers still allow changes only by the owner.
+        // API (mobile app): own records only. Web panel: own, team (managers) or all (admins).
         $scoped = function (string $model) {
             return function (string $value) use ($model) {
                 $user = auth()->user();

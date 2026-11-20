@@ -91,6 +91,17 @@ class User extends Authenticatable
         return $this->role === UserRole::Manager;
     }
 
+    public function isResearcher(): bool
+    {
+        return $this->role === UserRole::Researcher;
+    }
+
+    /** CRM leads and follow-ups (everyone except Business Finder researchers). */
+    public function canUseCrm(): bool
+    {
+        return ! $this->isResearcher();
+    }
+
     /** Admins and managers see other people's work and team reports. */
     public function canViewTeam(): bool
     {
@@ -98,8 +109,16 @@ class User extends Authenticatable
     }
 
     /**
-     * IDs of users whose records this user may VIEW (null = everyone).
-     * Editing is always limited to the owner.
+     * May change a record owned by $ownerId (web panel).
+     * Owner always; manager: their team; admin: everyone. The API stays owner-only.
+     */
+    public function canEdit(int $ownerId): bool
+    {
+        return $ownerId === $this->id || ($this->canViewTeam() && $this->canSeeUser($ownerId));
+    }
+
+    /**
+     * IDs of users whose records this user may view and (in the web panel) edit (null = everyone).
      *
      * @return list<int>|null
      */
